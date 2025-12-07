@@ -72,7 +72,7 @@ func Load() (*Config, error) {
 	config := &Config{
 		Environment: env,
 		Server: ServerConfig{
-			Port: os.Getenv("PORT"),
+			Port: os.Getenv("API_PORT"),
 		},
 		Database: DatabaseConfig{
 			URL:     dbUrl,

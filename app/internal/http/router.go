@@ -11,6 +11,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
+const healthPath = "/health"
+
 type RouterDependencies struct {
 	Controllers  []interfaces.Controller
 	AuthConfig   *config.AuthConfig
@@ -43,8 +45,8 @@ func NewRouter(deps *RouterDependencies) *Router {
 
 func (r *Router) setup() {
 	r.e.Validator = &CustomValidator{validator: validator.New()}
-	r.registerMiddlewares()
 	r.registerHealthCheck()
+	r.registerMiddlewares()
 	r.registerControllers()
 }
 
@@ -52,17 +54,30 @@ func (r *Router) registerMiddlewares() {
 	r.e.Use(middleware.Recover())
 	r.e.Use(middleware.RequestID())
 	r.e.Use(middleware.Logger())
-	r.e.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+	r.e.Use(
+		middleware.BasicAuthWithConfig(
+			middleware.BasicAuthConfig{
+				Skipper: func(c echo.Context) bool {
+					path := c.Path()
+					if path == healthPath {
+						return true
+					}
+					return false
+				},
+				Validator: func(username, password string, c echo.Context) (bool, error) {
 
-		isUsernameValid := 1 == subtle.ConstantTimeCompare([]byte(username), []byte(r.authCfg.Username))
-		isPasswordValid := 1 == subtle.ConstantTimeCompare([]byte(password), []byte(r.authCfg.Password))
+					isUsernameValid := 1 == subtle.ConstantTimeCompare([]byte(username), []byte(r.authCfg.Username))
+					isPasswordValid := 1 == subtle.ConstantTimeCompare([]byte(password), []byte(r.authCfg.Password))
 
-		return isUsernameValid && isPasswordValid, nil
-	}))
+					return isUsernameValid && isPasswordValid, nil
+				},
+			},
+		),
+	)
 }
 
 func (r *Router) registerHealthCheck() {
-	r.e.GET("/health", func(c echo.Context) error {
+	r.e.GET(healthPath, func(c echo.Context) error {
 		return c.String(http.StatusOK, "ok")
 	})
 }
