@@ -26,7 +26,7 @@ COPY --from=build /app/app/bin/api /app/api
 
 CMD ["/app/api"]
 
-FROM runtime as carler
+FROM runtime as crawler
 
 COPY --from=build /app/app/bin/crawler /app/crawler
 
