@@ -12,6 +12,8 @@ RUN make build-app
 
 FROM base as test
 
+RUN make test-app
+
 FROM alpine:3.23 as runtime
 
 WORKDIR /app
