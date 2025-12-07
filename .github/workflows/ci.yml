@@ -132,3 +132,34 @@ jobs:
           make migrate-down DB_URL="${{ env.DB_URL }}"
           echo "Testing Re-Apply..."
           make migrate-up DB_URL="${{ env.DB_URL }}"
+
+  security:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+#    needs: [app-pipeline, web-pipeline, migration-pipeline]
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'go', 'javascript' ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
