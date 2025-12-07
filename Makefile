@@ -2,7 +2,7 @@
 # DB & Tools
 SQLC_VERSION := v1.30.0
 MIGRATE_VERSION := v4.19.1
-MIGRATIONS_DIR := migrations
+MIGRATIONS_DIR := app/migrations
 
 APP_DIR := app
 APP_OUTPUT_DIR := app/bin
@@ -16,13 +16,13 @@ WEB_OUTPUT_DIR := web/dist
 # Set default DB_URL if not defined in .env
 DB_URL ?= postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)
 
-.PHONY: all help clean install-tools sqlc migrate-up migrate-down migrate-create env-setup build-backend build-web
+.PHONY: all help clean install-tools sqlc migrate-up migrate-down migrate-create env-setup build-app test-app build-web test-web
 
 # Default target
 help:
 	@echo "Available targets:"
 	@echo "  --- BUILD & DEPLOY ---"
-	@echo "  build-backend    - Build all Go services from cmd/ (OS: $(GOOS), Arch: $(GOARCH))"
+	@echo "  build-app    	  - Build all Go services from cmd/ (OS: $(GOOS), Arch: $(GOARCH))"
 	@echo "  build-web        - Build React frontend (installs deps + build)"
 	@echo "  clean            - Remove build artifacts (bin/ and dist/)"
 	@echo "  all              - Clean and build everything"
@@ -36,7 +36,7 @@ help:
 	@echo "  env-setup        - Create a .env file from template"
 
 # --- META TARGETS ---
-all: clean build-backend build-web
+all: clean build-app build-web
 
 clean:
 	@echo "Cleaning build artifacts..."
@@ -47,7 +47,7 @@ clean:
 # --- BUILD TARGETS ---
 
 # Build Generic Go Binaries (scans cmd/ directory)
-build-backend:
+build-app:
 	@echo "=== Building Backend Services (OS: $(GOOS), Arch: $(GOARCH)) ==="
 	# 1. Clean and create base output directory
 	@rm -rf $(APP_OUTPUT_DIR)
@@ -63,7 +63,9 @@ build-backend:
 	done
 	@echo "=== Backend Build Complete (Check $(APP_OUTPUT_DIR)/) ==="
 
-# Build React Frontend
+test-app:
+	@echo "test app"
+
 build-web:
 	@echo "=== Building Web Frontend ==="
 	@if [ ! -d "$(WEB_DIR)" ]; then echo "Error: $(WEB_DIR) directory not found"; exit 1; fi
@@ -74,7 +76,15 @@ build-web:
 	@if [ ! -d "$(WEB_OUTPUT_DIR)" ]; then echo "Error: dist folder missing after build"; exit 1; fi
 	@echo "=== Web Build Complete ==="
 
-# --- DATABASE & TOOLS TARGETS (Existing Logic) ---
+test-web:
+	@echo "=== Running Web Frontend Tests (with fresh deps) ==="
+	@if [ ! -d "$(WEB_DIR)" ]; then echo "Error: $(WEB_DIR) directory not found"; exit 1; fi
+	@cd $(WEB_DIR) && npm ci
+	@cd $(WEB_DIR) && npm test
+	@echo "=== Web Tests Finished ==="
+
+
+# --- DATABASE & TOOLS TARGETS ---
 
 install-tools:
 	@echo "Installing SQLC and golang-migrate..."
