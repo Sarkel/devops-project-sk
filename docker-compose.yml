@@ -32,9 +32,10 @@ services:
   scheduler:
     image: mcuadros/ofelia:0.3
     container_name: dp-scheduler
-    command: daemon --docker
+    command: daemon --config /etc/ofelia/config.ini
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./docker/scheduler/ofelia.ini:/etc/ofelia/config.ini:ro
     depends_on:
       - crawler
     networks:
@@ -62,9 +63,13 @@ services:
       start_period: 10s
 
   mqtt:
-    image: eclipse-mosquitto:2.0.18
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mqtt
     container_name: dp-mqtt
     restart: unless-stopped
+    env_file:
+      - .env
     expose:
       - 1883
     volumes:
@@ -134,6 +139,7 @@ services:
       dockerfile: docker/Dockerfile.app
       target: crawler
     container_name: dp-crawler
+    entrypoint: ["/bin/sh", "-c", "sleep infinity"]
     restart: no
     environment:
       MQTT_BROKER_HOST: mqtt
@@ -148,71 +154,68 @@ services:
         condition: service_healthy
       reader:
         condition: service_started
-    labels:
-      ofelia.enabled: "true"
-      ofelia.job-run.schedule: "@every 30m"
-      ofelia.job-run.command: "/app/crawler"
     networks:
       - back_net
+      - back_bridge_net # egress only
 
 
   # metrics & observability
-  prometheus:
-    image: prom/prometheus:v2.36.1
-    container_name: dp-prometheus
-    restart: unless-stopped
-    volumes:
-      - ./docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    networks:
-      - back_net
-
-  loki:
-    image: grafana/loki:2.5.0
-    container_name: dp-loki
-    restart: unless-stopped
-    volumes:
-      - ./docker/monitoring/loki-config.yaml:/etc/loki/local-config.yaml
-    command: -config.file=/etc/loki/local-config.yaml
-    ports:
-      - "3100:3100"
-    networks:
-      - back_net
-
-  promtail:
-    image: grafana/promtail:2.5.0
-    container_name: dp-promtail
-    restart: unless-stopped
-    volumes:
-      - ./docker/monitoring/promtail.yml:/etc/promtail/config.yml
-      - nginx_logs:/var/log/nginx:ro
-      - seed_output:/var/log/seed_output:ro
-    command: -config.file=/etc/promtail/config.yml
-    depends_on:
-      - loki
-    networks:
-      - back_net
-
-  grafana:
-    image: grafana/grafana:12.4.0-19913286788
-    container_name: dp-grafana
-    restart: unless-stopped
-    ports:
-      - "${GRAFANA_PORT}:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-      - GF_AUTH_ANONYMOUS_ENABLED=false
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./docker/monitoring/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-    depends_on:
-      - prometheus
-      - loki
-    networks:
-      - back_net
+#  prometheus:
+#    image: prom/prometheus:v2.36.1
+#    container_name: dp-prometheus
+#    restart: unless-stopped
+#    volumes:
+#      - ./docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+#    ports:
+#      - "9090:9090"
+#    command:
+#      - '--config.file=/etc/prometheus/prometheus.yml'
+#    networks:
+#      - back_net
+#
+#  loki:
+#    image: grafana/loki:2.5.0
+#    container_name: dp-loki
+#    restart: unless-stopped
+#    volumes:
+#      - ./docker/monitoring/loki-config.yaml:/etc/loki/local-config.yaml
+#    command: -config.file=/etc/loki/local-config.yaml
+#    ports:
+#      - "3100:3100"
+#    networks:
+#      - back_net
+#
+#  promtail:
+#    image: grafana/promtail:2.5.0
+#    container_name: dp-promtail
+#    restart: unless-stopped
+#    volumes:
+#      - ./docker/monitoring/promtail.yml:/etc/promtail/config.yml
+#      - nginx_logs:/var/log/nginx:ro
+#      - seed_output:/var/log/seed_output:ro
+#    command: -config.file=/etc/promtail/config.yml
+#    depends_on:
+#      - loki
+#    networks:
+#      - back_net
+#
+#  grafana:
+#    image: grafana/grafana:12.4.0-19913286788
+#    container_name: dp-grafana
+#    restart: unless-stopped
+#    ports:
+#      - "${GRAFANA_PORT}:3000"
+#    environment:
+#      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+#      - GF_AUTH_ANONYMOUS_ENABLED=false
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#      - ./docker/monitoring/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+#    depends_on:
+#      - prometheus
+#      - loki
+#    networks:
+#      - back_net
 
 
 volumes:
@@ -233,3 +236,7 @@ networks:
     driver: bridge
     name: devops-project-sk_back_net
     internal: true
+  back_bridge_net: # egress only
+    driver: bridge
+    name: devops-project-sk_bridge_net
+    internal: false

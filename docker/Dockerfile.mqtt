@@ -1,0 +1,7 @@
+FROM eclipse-mosquitto:2.0.18
+
+WORKDIR /app
+
+COPY ./scripts/start_mqtt.sh .
+
+ENTRYPOINT ["./start_mqtt.sh"]
