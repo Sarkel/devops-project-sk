@@ -48,8 +48,8 @@ services:
       POSTGRES_USER: $DB_USER
       POSTGRES_PASSWORD: $DB_PASSWORD
       POSTGRES_DB: $DB_NAME
-    ports:
-      - "${DB_PORT}:5432"
+    expose:
+      - 5432
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:
@@ -65,15 +65,14 @@ services:
     image: eclipse-mosquitto:2.0.18
     container_name: dp-mqtt
     restart: unless-stopped
-    ports:
-      - "${MQTT_BROKER_PORT}:1883"
+    expose:
+      - 1883
     volumes:
       - ./docker/mosquitto/config:/mosquitto/config
       - ./docker/mosquitto/data:/mosquitto/data
       - ./docker/mosquitto/log:/mosquitto/log
     networks:
       - back_net
-      - front_net
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 1883 || exit 1"]
       interval: 10s
@@ -90,12 +89,14 @@ services:
     container_name: dp-api
     environment:
       DB_HOST: db
+      DB_PORT: 5432
+      API_PORT: 8080
     env_file: .env
     networks:
       - front_net
       - back_net
-    ports:
-      - "${API_PORT}:8080"
+    expose:
+      - 8080
     depends_on:
       db:
         condition: service_healthy
@@ -115,7 +116,9 @@ services:
     container_name: dp-reader
     environment:
       DB_HOST: db
+      DB_PORT: 5432
       MQTT_BROKER_HOST: mqtt
+      MQTT_BROKER_PORT: 1883
     env_file: .env
     depends_on:
       db:
@@ -134,7 +137,9 @@ services:
     restart: no
     environment:
       MQTT_BROKER_HOST: mqtt
+      MQTT_BROKER_PORT: 1883
       DB_HOST: db
+      DB_PORT: 5432
     env_file: .env
     depends_on:
       mqtt:
@@ -223,5 +228,8 @@ volumes:
 networks:
   front_net:
     driver: bridge
+    name: devops-project-sk_front_net
   back_net:
     driver: bridge
+    name: devops-project-sk_back_net
+    internal: true

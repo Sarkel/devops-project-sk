@@ -68,6 +68,12 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	mqttUrl, err := getMqttBrokerURL()
+
+	if err != nil {
+		return nil, err
+	}
+
 	// todo: consider adding validation of loaded envs
 	config := &Config{
 		Environment: env,
@@ -84,7 +90,7 @@ func Load() (*Config, error) {
 			Format: os.Getenv("LOG_FORMAT"),
 		},
 		MQTTBroker: MQTTBrokerConfig{
-			URL:              os.Getenv("MQTT_BROKER_URL"),
+			URL:              mqttUrl,
 			Username:         os.Getenv("MQTT_BROKER_USERNAME"),
 			Password:         os.Getenv("MQTT_BROKER_PASSWORD"),
 			ClientID:         os.Getenv("MQTT_BROKER_CLIENT_ID"),
@@ -134,8 +140,8 @@ func getDBConnectionString() (string, error) {
 }
 
 func getMqttBrokerURL() (string, error) {
-	h := os.Getenv("DB_HOST")
-	p, err := getIntEnv("DB_PORT", -1)
+	h := os.Getenv("MQTT_BROKER_HOST")
+	p, err := getIntEnv("MQTT_BROKER_PORT", -1)
 
 	if -1 == p || err != nil {
 		return "", fmt.Errorf("cannot parse mqtt port :%w", err)
