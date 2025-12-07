@@ -20,8 +20,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
-      mqtt:
-        condition: service_healthy
+      grafana:
+        condition: service_started
     healthcheck:
       test: [ "CMD-SHELL", "wget -qO- http://localhost/health || exit 1" ]
       interval: 10s
@@ -160,62 +160,72 @@ services:
 
 
   # metrics & observability
-#  prometheus:
-#    image: prom/prometheus:v2.36.1
-#    container_name: dp-prometheus
-#    restart: unless-stopped
-#    volumes:
-#      - ./docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-#    ports:
-#      - "9090:9090"
-#    command:
-#      - '--config.file=/etc/prometheus/prometheus.yml'
-#    networks:
-#      - back_net
-#
-#  loki:
-#    image: grafana/loki:2.5.0
-#    container_name: dp-loki
-#    restart: unless-stopped
-#    volumes:
-#      - ./docker/monitoring/loki-config.yaml:/etc/loki/local-config.yaml
-#    command: -config.file=/etc/loki/local-config.yaml
-#    ports:
-#      - "3100:3100"
-#    networks:
-#      - back_net
-#
-#  promtail:
-#    image: grafana/promtail:2.5.0
-#    container_name: dp-promtail
-#    restart: unless-stopped
-#    volumes:
-#      - ./docker/monitoring/promtail.yml:/etc/promtail/config.yml
-#      - nginx_logs:/var/log/nginx:ro
-#      - seed_output:/var/log/seed_output:ro
-#    command: -config.file=/etc/promtail/config.yml
-#    depends_on:
-#      - loki
-#    networks:
-#      - back_net
-#
-#  grafana:
-#    image: grafana/grafana:12.4.0-19913286788
-#    container_name: dp-grafana
-#    restart: unless-stopped
-#    ports:
-#      - "${GRAFANA_PORT}:3000"
-#    environment:
-#      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-#      - GF_AUTH_ANONYMOUS_ENABLED=false
-#    volumes:
-#      - grafana_data:/var/lib/grafana
-#      - ./docker/monitoring/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-#    depends_on:
-#      - prometheus
-#      - loki
-#    networks:
-#      - back_net
+  prometheus:
+    image: prom/prometheus:v2.36.1
+    container_name: dp-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    expose:
+      - 9090
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - back_net
+
+  loki:
+    image: grafana/loki:2.5.0
+    container_name: dp-loki
+    restart: unless-stopped
+    volumes:
+      - ./docker/monitoring/loki-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    expose:
+      - 3100
+    networks:
+      - back_net
+
+  promtail:
+    image: grafana/promtail:2.5.0
+    container_name: dp-promtail
+    restart: unless-stopped
+    volumes:
+      - ./docker/monitoring/promtail.yml:/etc/promtail/config.yml
+      - nginx_logs:/var/log/nginx:ro
+      - seed_output:/var/log/seed_output:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - back_net
+
+  grafana:
+    image: grafana/grafana:12.4.0-19913286788
+    container_name: dp-grafana
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - 3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+#      -- Reverse proxy configuration
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:%(http_port)s/monitoring/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/monitoring/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./docker/monitoring/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./docker/monitoring/grafana/dashboards/json:/etc/grafana/provisioning/dashboards/json
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - back_net
+      - front_net
 
 
 volumes:

@@ -25,6 +25,14 @@ scrape_configs:
           job: nginx_access
           __path__: /var/log/nginx/*.log
 
+  - job_name: mqtt
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: mqtt_output
+          __path__: /var/log/mosquitto/*.log
+
   - job_name: seeder
     static_configs:
       - targets:
