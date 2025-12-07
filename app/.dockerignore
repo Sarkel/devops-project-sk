@@ -1,0 +1,4 @@
+bin/
+migrations/
+.gitignore
+sqlc.yml
