@@ -1,0 +1,109 @@
+version: '3.9'
+
+name: devops-project-sk
+
+services:
+  reverse-proxy:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.proxy
+      target: final
+    container_name: dp-reverse-proxy
+    restart: unless-stopped
+    ports:
+      - "${PROXY_PORT}:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - nginx_logs:/var/log/nginx
+#    networks:
+#      - front_net
+    depends_on:
+      api:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  db:
+    image: postgres:18-alpine
+    container_name: dp-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: $DB_USER
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_NAME
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mqtt:
+    image: eclipse-mosquitto:2.0.18
+    container_name: dp-mqtt
+    restart: unless-stopped
+    ports:
+      - "${MQTT_BROKER_PORT}:1883"
+    volumes:
+      - ./docker/mosquitto/config:/mosquitto/config
+      - ./docker/mosquitto/data:/mosquitto/data
+      - ./docker/mosquitto/log:/mosquitto/log
+#    networks:
+#      - back_net
+#      - front_net
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 1883 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      target: api
+    restart: unless-stopped
+    container_name: dp-api
+    env_file: .env
+#    networks:
+#      - front_net
+#      - back_net
+    ports:
+      - "${API_PORT}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+
+volumes:
+  db_data:
+    driver: local
+  nginx_logs:
+    driver: local
+  seed_output:
+    driver: local
+
+#networks:
+#  front_net:
+#    driver: bridge
+#  back_net:
+#    driver: bridge
