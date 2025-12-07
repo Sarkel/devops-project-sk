@@ -15,8 +15,8 @@ services:
     volumes:
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - nginx_logs:/var/log/nginx
-#    networks:
-#      - front_net
+    networks:
+      - front_net
     depends_on:
       api:
         condition: service_healthy
@@ -28,6 +28,17 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  scheduler:
+    image: mcuadros/ofelia:0.3
+    container_name: dp-scheduler
+    command: daemon --docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - crawler
+    networks:
+      - back_net
 
   db:
     image: postgres:18-alpine
@@ -41,6 +52,8 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - back_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
       interval: 10s
@@ -58,9 +71,9 @@ services:
       - ./docker/mosquitto/config:/mosquitto/config
       - ./docker/mosquitto/data:/mosquitto/data
       - ./docker/mosquitto/log:/mosquitto/log
-#    networks:
-#      - back_net
-#      - front_net
+    networks:
+      - back_net
+      - front_net
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 1883 || exit 1"]
       interval: 10s
@@ -75,23 +88,126 @@ services:
       target: api
     restart: unless-stopped
     container_name: dp-api
+    environment:
+      DB_HOST: db
     env_file: .env
-#    networks:
-#      - front_net
-#      - back_net
+    networks:
+      - front_net
+      - back_net
     ports:
       - "${API_PORT}:8080"
     depends_on:
       db:
-        condition: service_healthy
-      mqtt:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 5s
+
+  reader:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      target: reader
+    restart: unless-stopped
+    container_name: dp-reader
+    environment:
+      DB_HOST: db
+      MQTT_BROKER_HOST: mqtt
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+    networks:
+      - back_net
+
+  crawler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      target: crawler
+    container_name: dp-crawler
+    restart: no
+    environment:
+      MQTT_BROKER_HOST: mqtt
+      DB_HOST: db
+    env_file: .env
+    depends_on:
+      mqtt:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      reader:
+        condition: service_started
+    labels:
+      ofelia.enabled: "true"
+      ofelia.job-run.schedule: "@every 30m"
+      ofelia.job-run.command: "/app/crawler"
+    networks:
+      - back_net
+
+
+  # metrics & observability
+  prometheus:
+    image: prom/prometheus:v2.36.1
+    container_name: dp-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - back_net
+
+  loki:
+    image: grafana/loki:2.5.0
+    container_name: dp-loki
+    restart: unless-stopped
+    volumes:
+      - ./docker/monitoring/loki-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    networks:
+      - back_net
+
+  promtail:
+    image: grafana/promtail:2.5.0
+    container_name: dp-promtail
+    restart: unless-stopped
+    volumes:
+      - ./docker/monitoring/promtail.yml:/etc/promtail/config.yml
+      - nginx_logs:/var/log/nginx:ro
+      - seed_output:/var/log/seed_output:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - back_net
+
+  grafana:
+    image: grafana/grafana:12.4.0-19913286788
+    container_name: dp-grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/monitoring/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - back_net
 
 
 volumes:
@@ -101,9 +217,11 @@ volumes:
     driver: local
   seed_output:
     driver: local
+  grafana_data:
+    driver: local
 
-#networks:
-#  front_net:
-#    driver: bridge
-#  back_net:
-#    driver: bridge
+networks:
+  front_net:
+    driver: bridge
+  back_net:
+    driver: bridge
