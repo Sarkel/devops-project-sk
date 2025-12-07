@@ -1,0 +1,92 @@
+name: CI Pipeline
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+env:
+  # Toolchain Versions
+  GO_VERSION: "1.25"
+
+
+  # CI Database Config (Only for testing inside GitHub Actions sidecar)
+  TEST_DB_USER: test_user
+  TEST_DB_PASS: test_password
+  TEST_DB_NAME: test_db
+  TEST_DB_HOST: localhost
+  TEST_DB_PORT: 5432
+
+jobs:
+  app-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Go App
+        run: docker build --target build -f Dockerfile.app .
+
+      - name: Run Unit Tests
+        run: docker build --target test -f Dockerfile.app .
+
+  web-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Web
+        run: docker build --target build -f Dockerfile.proxy .
+
+      - name: Test Web
+        run: docker build --target test -f Dockerfile.proxy .
+
+  migration-pipeline:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: ${{ env.TEST_DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.TEST_DB_PASS }}
+          POSTGRES_DB: ${{ env.TEST_DB_NAME }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Install Migration Tools
+        run: make install-tools
+
+      - name: Verify SQLC Generation
+        run: chmod +x scripts/verify_sqlc.sh && ./scripts/verify_sqlc.sh
+
+      - name: Test Migrate Up & Down
+        env:
+          # Construct Connection String using global envs
+          DB_URL: "postgres://${{ env.TEST_DB_USER }}:${{ env.TEST_DB_PASS }}@localhost:5432/${{ env.TEST_DB_NAME }}?sslmode=disable"
+        run: |
+          echo "Testing Migrations UP..."
+          make migrate-up DB_URL="${{ env.DB_URL }}"
+          echo "Testing Migrations DOWN..."
+          make migrate-down DB_URL="${{ env.DB_URL }}"
+          echo "Testing Re-Apply..."
+          make migrate-up DB_URL="${{ env.DB_URL }}"
