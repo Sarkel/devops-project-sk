@@ -11,7 +11,6 @@ env:
   # Toolchain Versions
   GO_VERSION: "1.25"
 
-
   # CI Database Config (Only for testing inside GitHub Actions sidecar)
   TEST_DB_USER: test_user
   TEST_DB_PASS: test_password
@@ -25,6 +24,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
 
       - name: Build App
         uses: docker/build-push-action@v5
@@ -53,6 +57,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
 
       - name: Build Web
         uses: docker/build-push-action@v5
