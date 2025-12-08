@@ -19,6 +19,40 @@ env:
   TEST_DB_PORT: 5432
 
 jobs:
+  drift-validation:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: ${{ env.TEST_DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.TEST_DB_PASS }}
+          POSTGRES_DB: ${{ env.TEST_DB_NAME }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: app/go.sum
+
+      - name: Install Migration Tools
+        run: make install-tools
+
+      - name: Verify SQLC Generation
+        run: chmod +x scripts/verify_sqlc.sh && ./scripts/verify_sqlc.sh
+
   app-pipeline:
     runs-on: ubuntu-latest
     steps:
@@ -87,6 +121,7 @@ jobs:
 
   migration-pipeline:
     runs-on: ubuntu-latest
+    needs: [drift-validation]
     services:
       postgres:
         image: postgres:18-alpine
@@ -118,9 +153,6 @@ jobs:
       - name: Install Migration Tools
         run: make install-tools
 
-      - name: Verify SQLC Generation
-        run: chmod +x scripts/verify_sqlc.sh && ./scripts/verify_sqlc.sh
-
       - name: Test Migrate Up & Down
         env:
           # Construct Connection String using global envs
@@ -136,7 +168,7 @@ jobs:
   security:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
-#    needs: [app-pipeline, web-pipeline, migration-pipeline]
+    needs: [app-pipeline, web-pipeline, migration-pipeline]
     permissions:
       actions: read
       contents: read
