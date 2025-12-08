@@ -46,8 +46,12 @@ type MQTTBrokerConfig struct {
 }
 
 func Load() (*Config, error) {
-	env := os.Getenv("ENV")
-	env = os.Getenv("GO_ENV")
+	env := os.Getenv("GO_ENV")
+
+	if "" == env {
+		env = os.Getenv("ENV")
+	}
+
 	if "" == env {
 		env = "development"
 	}
