@@ -80,7 +80,7 @@ test-web:
 	@echo "=== Running Web Frontend Tests (with fresh deps) ==="
 	@if [ ! -d "$(WEB_DIR)" ]; then echo "Error: $(WEB_DIR) directory not found"; exit 1; fi
 	@cd $(WEB_DIR) && npm ci
-	@cd $(WEB_DIR) && npm test
+	@cd $(WEB_DIR) && npm run test:run
 	@echo "=== Web Tests Finished ==="
 
 
