@@ -58,7 +58,7 @@ build-app:
 		if [ -d "$$app_dir" ] && [ -f "$$app_dir/main.go" ]; then \
 			app_name=$$(basename "$$app_dir"); \
 			echo " > Building $$app_name..."; \
-			GOOS=$(GOOS) GOARCH=$(GOARCH) go build -C "$(APP_DIR)" -v -o "bin/$$app_name" "./cmd/$$app_name/main.go" || exit 1; \
+			go build -C "$(APP_DIR)" -v -o "bin/$$app_name" "./cmd/$$app_name/main.go" || exit 1; \
 		fi \
 	done
 	@echo "=== Backend Build Complete (Check $(APP_OUTPUT_DIR)/) ==="

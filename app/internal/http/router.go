@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"devops-project-sk/internal/config"
 	"devops-project-sk/internal/http/interfaces"
+	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -55,21 +56,14 @@ func (r *Router) registerMiddlewares() {
 	r.e.Use(middleware.RequestID())
 	r.e.Use(middleware.Logger())
 	r.e.Use(
-		middleware.BasicAuthWithConfig(
-			middleware.BasicAuthConfig{
-				Skipper: func(c echo.Context) bool {
-					path := c.Path()
-					if path == healthPath {
-						return true
-					}
-					return false
-				},
-				Validator: func(username, password string, c echo.Context) (bool, error) {
-
-					isUsernameValid := 1 == subtle.ConstantTimeCompare([]byte(username), []byte(r.authCfg.Username))
-					isPasswordValid := 1 == subtle.ConstantTimeCompare([]byte(password), []byte(r.authCfg.Password))
-
-					return isUsernameValid && isPasswordValid, nil
+		middleware.KeyAuthWithConfig(
+			middleware.KeyAuthConfig{
+				KeyLookup: fmt.Sprintf("header:%s", r.authCfg.KeyName),
+				Validator: func(key string, c echo.Context) (bool, error) {
+					return 1 == subtle.ConstantTimeCompare(
+						[]byte(key),
+						[]byte(r.authCfg.KeyVal),
+					), nil
 				},
 			},
 		),
@@ -83,9 +77,7 @@ func (r *Router) registerHealthCheck() {
 }
 
 func (r *Router) registerControllers() {
-	api := r.e.Group("/api")
-
-	v1 := api.Group("/v1")
+	v1 := r.e.Group("/v1")
 
 	for _, ctrl := range r.ctrls {
 		ctrl.RegisterRoutes(v1)

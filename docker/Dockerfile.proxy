@@ -17,5 +17,13 @@ RUN make test-web
 
 FROM nginx:1.21.6-alpine as final
 
+# envsubst do wstrzykiwania wartości z env w config
+RUN apk add --no-cache gettext && apk add --no-cache apache2-utils
+
+# kopiujemy szablon, nie gotowy config
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/web/dist /usr/share/nginx/html
+COPY ./scripts/start_nginx.sh .
+
+# entrypoint generuje finalny config z env i startuje nginx
+ENTRYPOINT ["./start_nginx.sh"]

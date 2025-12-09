@@ -22,8 +22,8 @@ type ServerConfig struct {
 }
 
 type AuthConfig struct {
-	Username string
-	Password string
+	KeyVal  string
+	KeyName string
 }
 
 type DatabaseConfig struct {
@@ -101,8 +101,8 @@ func Load() (*Config, error) {
 			PayloadSeparator: os.Getenv("MQTT_BROKER_PAYLOAD_SEPARATOR"),
 		},
 		Auth: AuthConfig{
-			Username: os.Getenv("AUTH_USERNAME"),
-			Password: os.Getenv("AUTH_PASSWORD"),
+			KeyVal:  os.Getenv("AUTH_KEY_VAL"),
+			KeyName: os.Getenv("AUTH_KEY_NAME"),
 		},
 	}
 
