@@ -1,4 +1,4 @@
-FROM node:22-alpine3.23 as base
+FROM node:22-alpine3.23 AS base
 
 WORKDIR /app
 
@@ -7,15 +7,15 @@ RUN apk add --no-cache make
 COPY Makefile .
 COPY web ./web
 
-FROM base as build
+FROM base AS build
 
 RUN make build-web
 
-FROM base as test
+FROM base AS test
 
 RUN make test-web
 
-FROM nginx:1.21.6-alpine as final
+FROM nginx:1.21.6-alpine AS final
 
 # envsubst do wstrzykiwania wartości z env w config
 RUN apk add --no-cache gettext && apk add --no-cache apache2-utils
