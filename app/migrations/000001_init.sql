@@ -1,3 +1,4 @@
+-- +goose Up
 create schema temp_checker;
 
 create table temp_checker.location
@@ -26,3 +27,6 @@ create table temp_checker.temperature_data
     temperature         numeric                                                          not null,
     timestamp           timestamptz                                                      not null
 );
+
+-- +goose Down
+drop schema temp_checker cascade ;

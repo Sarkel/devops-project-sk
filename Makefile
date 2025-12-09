@@ -1,7 +1,7 @@
 # --- CONFIGURATION VARIABLES ---
 # DB & Tools
 SQLC_VERSION := v1.30.0
-MIGRATE_VERSION := v4.19.1
+GOOSE_VERSION := v3.21.1
 MIGRATIONS_DIR := app/migrations
 
 APP_DIR := app
@@ -16,7 +16,9 @@ WEB_OUTPUT_DIR := web/dist
 # Set default DB_URL if not defined in .env
 DB_URL ?= postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)
 
-.PHONY: all help clean install-tools sqlc migrate-up migrate-down migrate-create env-setup build-app test-app build-web test-web
+.PHONY: all help clean \
+		install-tools sqlc migrate-up migrate-down migrate-down-all migrate-create migrate-status \
+		env-setup build-app test-app build-web test-web
 
 # Default target
 help:
@@ -28,11 +30,13 @@ help:
 	@echo "  all              - Clean and build everything"
 	@echo ""
 	@echo "  --- DATABASE & TOOLS ---"
-	@echo "  install-tools    - Install SQLC and golang-migrate tools"
+	@echo "  install-tools    - Install SQLC and goose tools"
 	@echo "  sqlc             - Generate Go code from SQL queries using SQLC"
 	@echo "  migrate-up       - Run all pending migrations"
 	@echo "  migrate-down     - Rollback the last migration"
+	@echo "  migrate-down-all - Rollback all applied migrations (down to version 0)"
 	@echo "  migrate-create   - Create a new migration file (usage: make migrate-create name=my_migration)"
+	@echo "  migrate-status   - Show migration status"
 	@echo "  env-setup        - Create a .env file from template"
 
 # --- META TARGETS ---
@@ -87,9 +91,9 @@ test-web:
 # --- DATABASE & TOOLS TARGETS ---
 
 install-tools:
-	@echo "Installing SQLC and golang-migrate..."
+	@echo "Installing tools..."
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
-	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@$(MIGRATE_VERSION)
+	go install github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION)
 	@echo "Tools installed successfully!"
 
 sqlc:
@@ -98,23 +102,32 @@ sqlc:
 	@echo "Code generation completed!"
 
 migrate-up:
-	@echo "Running migrations..."
-	migrate -path $(MIGRATIONS_DIR) -database "$(DB_URL)" up
+	@echo "Running migrations (goose up)..."
+	goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" up
 	@echo "Migrations completed!"
 
 migrate-down:
-	@echo "Rolling back the last migration..."
-	migrate -path $(MIGRATIONS_DIR) -database "$(DB_URL)" down 1
+	@echo "Rolling back the last migration (goose down 1)..."
+	goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" down 1
 	@echo "Rollback completed!"
+
+migrate-down-all:
+	@echo "Rolling back all migrations (goose down-to 0)..."
+	goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" down-to 0
+	@echo "All migrations rolled back!"
 
 migrate-create:
 	@if [ -z "$(name)" ]; then \
 		echo "Error: Migration name not provided. Usage: make migrate-create name=migration_name"; \
 		exit 1; \
 	fi
-	@echo "Creating new migration: $(name)"
-	@migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(name)
+	@echo "Creating new migration (sequential): $(name)"
+	@goose -dir $(MIGRATIONS_DIR) -s create $(name) sql
 	@echo "Migration file created!"
+
+migrate-status:
+	@echo "Migration status:"
+	@goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" status
 
 env-setup:
 	@if [ -f .env ]; then \

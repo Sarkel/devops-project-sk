@@ -1,1 +1,0 @@
-drop schema temp_checker cascade ;

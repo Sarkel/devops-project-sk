@@ -1,5 +1,0 @@
-drop index temp_checker.location_sensor_location_id_index;
-
-drop index temp_checker.sensor_data_location_sensor_id_index;
-
-drop index temp_checker.sensor_data_timestamp_index;
