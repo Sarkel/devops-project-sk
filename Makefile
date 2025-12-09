@@ -18,6 +18,7 @@ DB_URL ?= postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?
 
 .PHONY: all help clean \
 		install-tools sqlc migrate-up migrate-down migrate-down-all migrate-create migrate-status \
+		run-migration test-migration \
 		env-setup build-app test-app build-web test-web
 
 # Default target
@@ -37,6 +38,8 @@ help:
 	@echo "  migrate-down-all - Rollback all applied migrations (down to version 0)"
 	@echo "  migrate-create   - Create a new migration file (usage: make migrate-create name=my_migration)"
 	@echo "  migrate-status   - Show migration status"
+	@echo "  run-migration    - Run migration sequence"
+	@echo "  test-migration	  - Run CI test migration sequence"
 	@echo "  env-setup        - Create a .env file from template"
 
 # --- META TARGETS ---
@@ -128,6 +131,24 @@ migrate-create:
 migrate-status:
 	@echo "Migration status:"
 	@goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" status
+
+run-migration:
+	@echo "=== Running migration sequence ==="
+	$(MAKE) migrate-status
+	$(MAKE) migrate-up || exit 1
+	$(MAKE) migrate-status
+	@echo "=== Migration sequence completed ==="
+
+test-migration:
+	@echo "=== Running CI test migration sequence ==="
+	$(MAKE) migrate-status
+	$(MAKE) migrate-up || exit 1
+	$(MAKE) migrate-down-all || exit 1
+	$(MAKE) migrate-up || exit 1
+	$(MAKE) migrate-down || exit 1
+	$(MAKE) migrate-up || exit 1
+	$(MAKE) migrate-status
+	@echo "=== Migration test sequence completed successfully ==="
 
 env-setup:
 	@if [ -f .env ]; then \
