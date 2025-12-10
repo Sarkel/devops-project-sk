@@ -1,6 +1,6 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /migrations
+WORKDIR /build
 
 RUN apk add --no-cache make
 
@@ -8,12 +8,22 @@ COPY Makefile .
 
 RUN make install-tools
 
-COPY ./app/migrations app/migrations
+FROM alpine:3.23 AS base
 
-FROM builder AS test
+WORKDIR /migrations
+
+RUN apk add --no-cache make
+
+COPY --from=builder /go/bin/goose /bin/goose
+
+COPY Makefile .
+
+COPY ./app/migrations ./app/migrations
+
+FROM base AS test
 
 ENTRYPOINT ["make", "test-migration"]
 
-FROM builder AS runner
+FROM base AS runner
 
 ENTRYPOINT ["make", "run-migration"]
