@@ -30,8 +30,16 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: app/go.sum
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/go/bin
+          key: ${{ runner.os }}-go-tools-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-go-tools-
 
       - name: Install Migration Tools
         run: make install-tools
@@ -57,7 +65,7 @@ jobs:
           file: docker/Dockerfile.app
           target: build
           load: true
-          tags: 'my-app:build'
+          tags: my-app:build
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -68,7 +76,7 @@ jobs:
           file: docker/Dockerfile.app
           target: test
           load: true
-          tags: 'my-app:test'
+          tags: my-app:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -90,7 +98,7 @@ jobs:
           file: docker/Dockerfile.proxy
           target: build
           load: true
-          tags: 'my-web:build'
+          tags: my-web:build
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -101,7 +109,7 @@ jobs:
           file: docker/Dockerfile.proxy
           target: test
           load: true
-          tags: 'my-web:test'
+          tags: my-web:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -139,17 +147,17 @@ jobs:
         with:
           context: .
           file: docker/Dockerfile.migrations
-          load: true
           target: test
+          load: true
           tags: migrations:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Test migrations
         run: docker run --rm \
-          --add-host=host.docker.internal:host-gateway \
+          --network host \
           -e DB_USER \
-          -e DB_PASSWORD \
+          -e DB_PASS \
           -e DB_NAME \
           -e DB_HOST \
           -e DB_PORT \
