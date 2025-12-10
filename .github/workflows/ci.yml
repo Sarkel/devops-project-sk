@@ -13,7 +13,7 @@ env:
 
   # CI Database Config (Only for testing inside GitHub Actions sidecar)
   DB_USER: test_user
-  DB_PASS: test_password
+  DB_PASSWORD: test_password
   DB_NAME: test_db
   DB_HOST: localhost
   DB_PORT: 5432
@@ -121,7 +121,7 @@ jobs:
         image: postgres:18-alpine
         env:
           POSTGRES_USER: ${{ env.DB_USER }}
-          POSTGRES_PASSWORD: ${{ env.DB_PASS }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
           POSTGRES_DB: ${{ env.DB_NAME }}
         ports:
           - 5432:5432
@@ -154,14 +154,15 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Test migrations
-        run: docker run --rm \
+        run: |
+          docker run --rm \
           --network host \
-          -e DB_USER \
-          -e DB_PASS \
-          -e DB_NAME \
-          -e DB_HOST \
-          -e DB_PORT \
-          -e DB_SSL_MODE \
+          -e DB_USER=${{ env.DB_USER }} \
+          -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+          -e DB_NAME=${{ env.DB_NAME }} \
+          -e DB_HOST=localhost \
+          -e DB_PORT=${{ env.DB_PORT }} \
+          -e DB_SSL_MODE=${{ env.DB_SSL_MODE }} \
           migrations:test
 
   security:
