@@ -2,9 +2,10 @@ package reader
 
 import (
 	"context"
-	"devops-project-sk/internal/db"
-	genDb "devops-project-sk/internal/db/gen"
-	"devops-project-sk/internal/mqtt"
+	"devops/app/internal/db"
+	genDb "devops/app/internal/db/gen"
+	cDB "devops/common/db"
+	"devops/common/mqtt"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -13,13 +14,13 @@ import (
 )
 
 type Dependencies struct {
-	DB     *db.ConManager
+	DB     *cDB.ConManager
 	Logger *slog.Logger
 	Broker mqtt.Client
 }
 
 type Service struct {
-	db *db.ConManager
+	db *cDB.ConManager
 	l  *slog.Logger
 	b  mqtt.Client
 }
@@ -41,7 +42,7 @@ func (s *Service) Listen(ctx context.Context) error {
 
 func (s *Service) processMessage(ctx context.Context, _ mqtt.Client, msg mqtt.Message) {
 	// todo: move logic to save to DB to separate goroutine with queue process
-	q := s.db.WithQ()
+	q := db.WithQ(s.db)
 
 	locationSensorId, err := s.getLocationSensorId(ctx, &msg)
 
@@ -68,7 +69,7 @@ func (s *Service) getLocationSensorId(ctx context.Context, msg *mqtt.Message) (i
 		return -1, fmt.Errorf("invalid topic format %s", msg.Topic)
 	}
 
-	locationSensorId, err := s.db.WithQ().GetLocationSensorBySensorId(ctx, genDb.GetLocationSensorBySensorIdParams{
+	locationSensorId, err := db.WithQ(s.db).GetLocationSensorBySensorId(ctx, genDb.GetLocationSensorBySensorIdParams{
 		SensorSid:   parts[2],
 		LocationSid: parts[1],
 	})

@@ -2,11 +2,11 @@ package app
 
 import (
 	"context"
-	"devops-project-sk/internal/config"
-	"devops-project-sk/internal/core/reader"
-	"devops-project-sk/internal/db"
-	"devops-project-sk/internal/logger"
-	"devops-project-sk/internal/mqtt"
+	"devops/app/internal/core/reader"
+	"devops/common/config"
+	"devops/common/db"
+	"devops/common/logger"
+	"devops/common/mqtt"
 	"fmt"
 	"os"
 	"os/signal"

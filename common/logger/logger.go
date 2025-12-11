@@ -1,9 +1,12 @@
 package logger
 
 import (
-	"devops-project-sk/internal/config"
+	"context"
+	"devops/common/config"
 	"log/slog"
 	"os"
+
+	"github.com/jackc/pgx/v5/tracelog"
 )
 
 type Dependencies struct {
@@ -50,4 +53,29 @@ func getLevel(level string) (l slog.Level) {
 		l = slog.LevelInfo
 	}
 	return
+}
+
+func MapDBLogLevels(dbLogLevel tracelog.LogLevel) (slogLevel slog.Level) {
+	switch dbLogLevel {
+	case tracelog.LogLevelTrace:
+		slogLevel = slog.LevelDebug
+	case tracelog.LogLevelDebug:
+		slogLevel = slog.LevelDebug
+	case tracelog.LogLevelInfo:
+		slogLevel = slog.LevelInfo
+	case tracelog.LogLevelWarn:
+		slogLevel = slog.LevelWarn
+	case tracelog.LogLevelError:
+		slogLevel = slog.LevelError
+	default:
+		slogLevel = slog.LevelInfo
+	}
+	return
+}
+
+func TraceDBLogs(log *slog.Logger) func(ctx context.Context, level tracelog.LogLevel, msg string, data map[string]any) {
+	return func(ctx context.Context, level tracelog.LogLevel, msg string, data map[string]any) {
+		slogLevel := MapDBLogLevels(level)
+		log.Log(ctx, slogLevel, msg, slog.Any("pgx", data))
+	}
 }

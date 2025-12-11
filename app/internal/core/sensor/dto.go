@@ -1,7 +1,7 @@
 package sensor
 
 import (
-	genDb "devops-project-sk/internal/db/gen"
+	genDb "devops/app/internal/db/gen"
 	"time"
 )
 

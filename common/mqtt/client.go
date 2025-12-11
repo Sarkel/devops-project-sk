@@ -2,7 +2,7 @@ package mqtt
 
 import (
 	"context"
-	"devops-project-sk/internal/config"
+	"devops/common/config"
 	"log/slog"
 )
 

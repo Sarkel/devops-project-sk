@@ -2,17 +2,18 @@ package sensor
 
 import (
 	"context"
-	"devops-project-sk/internal/db"
-	genDb "devops-project-sk/internal/db/gen"
+	"devops/app/internal/db"
+	genDb "devops/app/internal/db/gen"
+	cDB "devops/common/db"
 	"errors"
 	"fmt"
 )
 
 type Dependencies struct {
-	Db *db.ConManager
+	Db *cDB.ConManager
 }
 type Service struct {
-	db *db.ConManager
+	db *cDB.ConManager
 }
 
 func NewService(deps Dependencies) *Service {
@@ -22,7 +23,7 @@ func NewService(deps Dependencies) *Service {
 }
 
 func (s *Service) GetSummary(ctx context.Context, params SummaryQs) (Summary, error) {
-	q := s.db.WithQ()
+	q := db.WithQ(s.db)
 
 	locExist, err := q.LocationExistBySid(ctx, params.LocationSid)
 
@@ -69,7 +70,7 @@ func (s *Service) GetSummary(ctx context.Context, params SummaryQs) (Summary, er
 }
 
 func (s *Service) GetData(ctx context.Context, params DataQs) ([]DataPoint, error) {
-	q := s.db.WithQ()
+	q := db.WithQ(s.db)
 
 	res, err := q.GetSensorDataPoints(ctx, genDb.GetSensorDataPointsParams{
 		Aggregation:   params.Aggregation,

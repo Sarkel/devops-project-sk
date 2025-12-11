@@ -1,66 +1,10 @@
 package db
 
 import (
-	"database/sql"
-	"devops-project-sk/internal/config"
-	sqlc "devops-project-sk/internal/db/gen"
-	"log/slog"
-
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/jackc/pgx/v5/tracelog"
+	sqlc "devops/app/internal/db/gen"
+	cDB "devops/common/db"
 )
 
-type Dependencies struct {
-	Logger *slog.Logger
-	Config *config.DatabaseConfig
-}
-
-type ConManager struct {
-	db  *sql.DB
-	log *slog.Logger
-}
-
-func NewConManager(deps Dependencies) (*ConManager, error) {
-	cfg := deps.Config
-	log := deps.Logger
-
-	pgxCfg, err := pgx.ParseConfig(cfg.URL)
-
-	if err != nil {
-		log.Error("Failed to parse database URL", slog.String("error", err.Error()))
-		return nil, err
-	}
-
-	if cfg.Debug {
-		pgxCfg.Tracer = &tracelog.TraceLog{
-			Logger:   tracelog.LoggerFunc(traceDBLogs(log)),
-			LogLevel: tracelog.LogLevelDebug,
-		}
-	}
-
-	connector := stdlib.GetConnector(*pgxCfg)
-
-	db := sql.OpenDB(connector)
-
-	db.SetMaxOpenConns(cfg.ConPool)
-
-	return &ConManager{
-		db:  db,
-		log: deps.Logger,
-	}, nil
-}
-
-func (c *ConManager) WithQ() *sqlc.Queries {
-	return sqlc.New(c.db)
-}
-
-func (c *ConManager) Close() error {
-	return c.db.Close()
-}
-
-func Close(conManager *ConManager, log *slog.Logger) {
-	if err := conManager.Close(); err != nil {
-		log.Error("failed to close database connection", err)
-	}
+func WithQ(c *cDB.ConManager) *sqlc.Queries {
+	return sqlc.New(c.GetDB())
 }

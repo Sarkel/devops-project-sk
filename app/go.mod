@@ -1,4 +1,4 @@
-module devops-project-sk
+module devops/app
 
 go 1.25
 

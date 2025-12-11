@@ -18,7 +18,7 @@ COPY --from=builder /go/bin/goose /bin/goose
 
 COPY Makefile .
 
-COPY ./app/migrations ./app/migrations
+COPY ./migrations migrations
 
 FROM base AS test
 

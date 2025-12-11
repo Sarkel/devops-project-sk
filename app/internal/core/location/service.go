@@ -2,15 +2,16 @@ package location
 
 import (
 	"context"
-	"devops-project-sk/internal/db"
+	"devops/app/internal/db"
+	cDB "devops/common/db"
 )
 
 type Dependencies struct {
-	Db *db.ConManager
+	Db *cDB.ConManager
 }
 
 type Service struct {
-	db *db.ConManager
+	db *cDB.ConManager
 }
 
 func NewService(deps Dependencies) *Service {
@@ -20,7 +21,7 @@ func NewService(deps Dependencies) *Service {
 }
 
 func (s *Service) GetLocations(ctx context.Context) ([]Location, error) {
-	q := s.db.WithQ()
+	q := db.WithQ(s.db)
 
 	locations, err := q.GetLocations(ctx)
 

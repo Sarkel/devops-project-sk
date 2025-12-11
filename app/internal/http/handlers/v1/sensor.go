@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"devops-project-sk/internal/core/sensor"
+	"devops/app/internal/core/sensor"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

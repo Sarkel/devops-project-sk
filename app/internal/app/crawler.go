@@ -2,12 +2,12 @@ package app
 
 import (
 	"context"
-	"devops-project-sk/internal/config"
-	"devops-project-sk/internal/core/crawler"
-	"devops-project-sk/internal/core/meteo"
-	"devops-project-sk/internal/db"
-	"devops-project-sk/internal/logger"
-	"devops-project-sk/internal/mqtt"
+	"devops/app/internal/core/crawler"
+	"devops/app/internal/core/meteo"
+	"devops/common/config"
+	"devops/common/db"
+	"devops/common/logger"
+	"devops/common/mqtt"
 	"fmt"
 )
 

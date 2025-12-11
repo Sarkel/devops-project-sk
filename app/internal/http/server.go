@@ -2,7 +2,7 @@ package http
 
 import (
 	"context"
-	"devops-project-sk/internal/config"
+	"devops/common/config"
 	"errors"
 	"log/slog"
 	"net/http"

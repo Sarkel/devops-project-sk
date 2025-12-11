@@ -1,7 +1,7 @@
 package main
 
 import (
-	"devops-project-sk/internal/app"
+	"devops/app/internal/app"
 	"log"
 )
 

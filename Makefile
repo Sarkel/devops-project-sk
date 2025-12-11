@@ -2,7 +2,7 @@
 # DB & Tools
 SQLC_VERSION := v1.30.0
 GOOSE_VERSION := v3.21.1
-MIGRATIONS_DIR := app/migrations
+MIGRATIONS_DIR := migrations
 
 APP_DIR := app
 APP_OUTPUT_DIR := app/bin

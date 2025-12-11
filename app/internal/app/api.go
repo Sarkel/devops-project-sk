@@ -1,14 +1,14 @@
 package app
 
 import (
-	"devops-project-sk/internal/config"
-	"devops-project-sk/internal/core/location"
-	"devops-project-sk/internal/core/sensor"
-	"devops-project-sk/internal/db"
-	"devops-project-sk/internal/http"
-	v1 "devops-project-sk/internal/http/handlers/v1"
-	"devops-project-sk/internal/http/interfaces"
-	"devops-project-sk/internal/logger"
+	"devops/app/internal/core/location"
+	"devops/app/internal/core/sensor"
+	"devops/app/internal/http"
+	v1 "devops/app/internal/http/handlers/v1"
+	"devops/app/internal/http/interfaces"
+	"devops/common/config"
+	"devops/common/db"
+	"devops/common/logger"
 	"fmt"
 )
 

@@ -2,8 +2,8 @@ package http
 
 import (
 	"crypto/subtle"
-	"devops-project-sk/internal/config"
-	"devops-project-sk/internal/http/interfaces"
+	"devops/app/internal/http/interfaces"
+	"devops/common/config"
 	"fmt"
 	"net/http"
 

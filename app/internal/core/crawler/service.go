@@ -2,10 +2,11 @@ package crawler
 
 import (
 	"context"
-	"devops-project-sk/internal/core/meteo"
-	"devops-project-sk/internal/db"
-	dbGen "devops-project-sk/internal/db/gen"
-	"devops-project-sk/internal/mqtt"
+	"devops/app/internal/core/meteo"
+	"devops/app/internal/db"
+	dbGen "devops/app/internal/db/gen"
+	cDB "devops/common/db"
+	"devops/common/mqtt"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -14,14 +15,14 @@ import (
 )
 
 type ServiceDependencies struct {
-	DB          *db.ConManager
+	DB          *cDB.ConManager
 	Logger      *slog.Logger
 	MeteoClient meteo.Client
 	Broker      mqtt.Client
 }
 
 type Service struct {
-	db *db.ConManager
+	db *cDB.ConManager
 	l  *slog.Logger
 	mc meteo.Client
 	b  mqtt.Client
@@ -37,7 +38,7 @@ func NewService(deps *ServiceDependencies) *Service {
 }
 
 func (s *Service) Crawl(ctx context.Context) error {
-	q := s.db.WithQ()
+	q := db.WithQ(s.db)
 
 	locations, err := q.GetAPILocationSensors(ctx)
 

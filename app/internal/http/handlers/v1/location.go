@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"devops-project-sk/internal/core/location"
+	"devops/app/internal/core/location"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
