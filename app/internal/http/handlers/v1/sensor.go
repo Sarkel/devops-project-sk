@@ -1,18 +1,24 @@
 package v1
 
 import (
+	"context"
 	"devops/app/internal/core/sensor"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
+type SensorService interface {
+	GetSummary(ctx context.Context, params sensor.SummaryQs) (sensor.Summary, error)
+	GetData(ctx context.Context, params sensor.DataQs) ([]sensor.DataPoint, error)
+}
+
 type SensorsCtrlDependencies struct {
-	Service *sensor.Service
+	Service SensorService
 }
 
 type SensorsCtrl struct {
-	s *sensor.Service
+	s SensorService
 }
 
 func NewSensorsCtrl(deps SensorsCtrlDependencies) *SensorsCtrl {

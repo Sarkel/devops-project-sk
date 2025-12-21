@@ -109,3 +109,79 @@ func TestServer_ConfigurationPassing(t *testing.T) {
 		assert.Equal(t, tc.port, server.cfg.Port)
 	}
 }
+
+func TestNewServer(t *testing.T) {
+	e := echo.New()
+	r := &Router{e: e}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	cfg := &config.ServerConfig{Port: "8080"}
+
+	deps := ServerDependencies{
+		Router: r,
+		Logger: logger,
+		Config: cfg,
+	}
+
+	server := NewServer(deps)
+
+	assert.NotNil(t, server)
+	assert.NotNil(t, server.e)
+	assert.NotNil(t, server.log)
+	assert.NotNil(t, server.cfg)
+	assert.Equal(t, e, server.e)
+	assert.Equal(t, logger, server.log)
+	assert.Equal(t, cfg, server.cfg)
+}
+
+func TestServer_WaitForShutdownWithServerError(t *testing.T) {
+	e := echo.New()
+	r := &Router{e: e}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	cfg := &config.ServerConfig{Port: "8080"}
+
+	deps := ServerDependencies{
+		Router: r,
+		Logger: logger,
+		Config: cfg,
+	}
+
+	server := NewServer(deps)
+
+	svrErr := make(chan error, 1)
+	expectedErr := assert.AnError
+	svrErr <- expectedErr
+
+	err := server.waitForShutdown(svrErr)
+
+	assert.Error(t, err)
+	assert.Equal(t, expectedErr, err)
+}
+
+func TestServer_ShutdownMethod(t *testing.T) {
+	e := echo.New()
+	r := &Router{e: e}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	cfg := &config.ServerConfig{Port: "8080"}
+
+	deps := ServerDependencies{
+		Router: r,
+		Logger: logger,
+		Config: cfg,
+	}
+
+	server := NewServer(deps)
+
+	// Start server in background so we have something to shutdown
+	go func() {
+		_ = e.Start(":0")
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+
+	err := server.shutdown()
+
+	// Should not error or should return ErrServerClosed
+	if err != nil && err != http.ErrServerClosed {
+		t.Errorf("Unexpected shutdown error: %v", err)
+	}
+}

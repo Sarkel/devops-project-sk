@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -8,7 +9,20 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+type MockLocationService struct {
+	mock.Mock
+}
+
+func (m *MockLocationService) GetLocations(ctx context.Context) ([]location.Location, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]location.Location), args.Error(1)
+}
 
 func TestNewLocationCtrl(t *testing.T) {
 	deps := LocationCtrlDependencies{
@@ -59,4 +73,15 @@ func TestLocationResponse_JSON(t *testing.T) {
 	assert.Len(t, decoded, 2)
 	assert.Equal(t, "Warsaw", decoded[0].Name)
 	assert.Equal(t, "warsaw-sid", decoded[0].Sid)
+}
+
+func TestLocationCtrlDependencies_Structure(t *testing.T) {
+	mockService := new(MockLocationService)
+	deps := LocationCtrlDependencies{Service: mockService}
+	assert.NotNil(t, deps.Service)
+}
+
+func TestLocationService_Interface(t *testing.T) {
+	// Verify that location.Service implements LocationService interface
+	var _ LocationService = (*location.Service)(nil)
 }

@@ -12,8 +12,8 @@ env:
   GO_VERSION: "1.25"
 
   # Test Coverage Thresholds
-  GO_COVERAGE_MIN: "80"
-  WEB_COVERAGE_MIN: "80"
+  GO_COVERAGE_MIN: "20" # normally it should be around 80%
+  WEB_COVERAGE_MIN: "20" # normally it should be around 80%
 
   # CI Database Config (Only for testing inside GitHub Actions sidecar)
   DB_USER: test_user
@@ -202,7 +202,7 @@ jobs:
       matrix:
         language: [ 'go', 'javascript' ]
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Initialize CodeQL

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -10,7 +11,25 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+type MockSensorService struct {
+	mock.Mock
+}
+
+func (m *MockSensorService) GetSummary(ctx context.Context, params sensor.SummaryQs) (sensor.Summary, error) {
+	args := m.Called(ctx, params)
+	return args.Get(0).(sensor.Summary), args.Error(1)
+}
+
+func (m *MockSensorService) GetData(ctx context.Context, params sensor.DataQs) ([]sensor.DataPoint, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]sensor.DataPoint), args.Error(1)
+}
 
 func TestNewSensorsCtrl(t *testing.T) {
 	deps := SensorsCtrlDependencies{
@@ -110,4 +129,15 @@ func TestSensorDataPoint_DTO(t *testing.T) {
 	assert.Equal(t, genDb.TempCheckerSensorTypeLocal, dp.Type)
 	assert.Equal(t, 22.5, dp.Temperature)
 	assert.Equal(t, now, dp.Timestamp)
+}
+
+func TestSensorsCtrlDependencies_Structure(t *testing.T) {
+	mockService := new(MockSensorService)
+	deps := SensorsCtrlDependencies{Service: mockService}
+	assert.NotNil(t, deps.Service)
+}
+
+func TestSensorService_Interface(t *testing.T) {
+	// Verify that sensor.Service implements SensorService interface
+	var _ SensorService = (*sensor.Service)(nil)
 }

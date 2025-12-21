@@ -1,18 +1,23 @@
 package v1
 
 import (
+	"context"
 	"devops/app/internal/core/location"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
+type LocationService interface {
+	GetLocations(ctx context.Context) ([]location.Location, error)
+}
+
 type LocationCtrlDependencies struct {
-	Service *location.Service
+	Service LocationService
 }
 
 type LocationCtrl struct {
-	s *location.Service
+	s LocationService
 }
 
 func NewLocationCtrl(deps LocationCtrlDependencies) *LocationCtrl {
