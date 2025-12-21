@@ -334,6 +334,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Downcase REPO
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -354,7 +358,7 @@ jobs:
           target: ${{ matrix.service.target }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/${{ matrix.service.name }}:latest
-            ghcr.io/${{ github.repository }}/${{ matrix.service.name }}:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LC }}/${{ matrix.service.name }}:latest
+            ghcr.io/${{ env.REPO_LC }}/${{ matrix.service.name }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
