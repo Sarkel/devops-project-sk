@@ -233,7 +233,7 @@ jobs:
 
       - name: Test migrations
         run: |
-          docker run --rm \
+          docker run --rm -t \
           --network host \
           -e DB_USER=${{ env.DB_USER }} \
           -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
@@ -256,7 +256,7 @@ jobs:
 
       - name: Test seeder
         run: |
-          docker run --rm \
+          docker run --rm -t \
           --network host \
           -e DB_USER=${{ env.DB_USER }} \
           -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
