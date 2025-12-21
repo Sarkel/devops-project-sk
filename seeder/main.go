@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"devops/seeder/internal/export"
 	"devops/seeder/internal/seeder"
 	"embed"
 	"fmt"
@@ -24,7 +22,7 @@ func main() {
 }
 
 func RunSeeder() error {
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	cfg, err := config.Load()
 

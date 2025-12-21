@@ -255,6 +255,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Test seeder
+        timeout-minutes: 10
         run: |
           docker run --rm -t \
           --network host \
