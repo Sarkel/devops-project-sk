@@ -336,10 +336,10 @@ jobs:
             target: final
           - name: migrations
             file: docker/Dockerfile.migrations
-            target: runner
+            target: final
           - name: mqtt
             file: docker/Dockerfile.mqtt
-            target: runner
+            target: ''
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
