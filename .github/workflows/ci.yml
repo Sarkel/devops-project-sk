@@ -15,10 +15,6 @@ env:
   # Toolchain Versions
   GO_VERSION: "1.25"
 
-  # Test Coverage Thresholds
-  GO_COVERAGE_MIN: "20" # normally it should be around 80%
-  WEB_COVERAGE_MIN: "20" # normally it should be around 80%
-
   # CI Database Config (Only for testing inside GitHub Actions sidecar)
   DB_USER: test_user
   DB_PASSWORD: test_password
@@ -96,7 +92,7 @@ jobs:
         uses: vladopajic/go-test-coverage@v2
         with:
           profile: artifacts/app-test/coverage.out
-          threshold-total: ${{ env.GO_COVERAGE_MIN }}
+          threshold-total: ${{ vars.GO_COVERAGE_MIN }}
 
   web-pipeline:
     runs-on: ubuntu-latest
@@ -139,7 +135,7 @@ jobs:
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
           coverage-file: artifacts/web-test/coverage/coverage-final.json
-          threshold: ${{ env.WEB_COVERAGE_MIN }}
+          threshold: ${{ vars.WEB_COVERAGE_MIN }}
 
   migration-pipeline:
     runs-on: ubuntu-latest
