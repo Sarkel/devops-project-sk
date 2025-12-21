@@ -11,6 +11,10 @@ env:
   # Toolchain Versions
   GO_VERSION: "1.25"
 
+  # Test Coverage Thresholds
+  GO_COVERAGE_MIN: "80"
+  WEB_COVERAGE_MIN: "80"
+
   # CI Database Config (Only for testing inside GitHub Actions sidecar)
   DB_USER: test_user
   DB_PASSWORD: test_password
@@ -64,21 +68,31 @@ jobs:
           context: .
           file: docker/Dockerfile.app
           target: build
-          load: true
-          tags: my-app:build
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run Unit Tests
+      - name: Test App
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/Dockerfile.app
-          target: test
-          load: true
-          tags: my-app:test
+          target: artifact-export
+          outputs: type=local,dest=artifacts/app-test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Upload App coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-coverage
+          path: artifacts/app-test/coverage.out
+          if-no-files-found: error
+
+      - name: Enforce App coverage threshold
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          profile: artifacts/app-test/coverage.out
+          threshold-total: ${{ env.GO_COVERAGE_MIN }}
 
   web-pipeline:
     runs-on: ubuntu-latest
@@ -97,8 +111,6 @@ jobs:
           context: .
           file: docker/Dockerfile.proxy
           target: build
-          load: true
-          tags: my-web:build
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -107,11 +119,23 @@ jobs:
         with:
           context: .
           file: docker/Dockerfile.proxy
-          target: test
-          load: true
-          tags: my-web:test
+          target: artifact-export
+          outputs: type=local,dest=artifacts/web-test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Upload Web coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-coverage
+          path: artifacts/web-test/coverage/
+          if-no-files-found: error
+
+      - name: Enforce Web coverage threshold
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          coverage-file: artifacts/web-test/coverage/coverage-final.json
+          threshold: ${{ env.WEB_COVERAGE_MIN }}
 
   migration-pipeline:
     runs-on: ubuntu-latest
