@@ -249,7 +249,7 @@ jobs:
         with:
           context: .
           file: docker/Dockerfile.app
-          target: test
+          target: seeder
           load: true
           tags: app:seeder
           cache-from: type=gha

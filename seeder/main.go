@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"devops/seeder/internal/export"
 	"devops/seeder/internal/seeder"
 	"embed"
 	"fmt"
@@ -22,7 +24,7 @@ func main() {
 }
 
 func RunSeeder() error {
-	//ctx := context.Background()
+	ctx := context.Background()
 
 	cfg, err := config.Load()
 
@@ -55,13 +57,13 @@ func RunSeeder() error {
 		return fmt.Errorf("failed to seed database: %w", err)
 	}
 
-	//exporter := export.New(export.Dependencies{
-	//	Db: conManager,
-	//	L:  l,
-	//})
+	exporter := export.New(export.Dependencies{
+		Db: conManager,
+		L:  l,
+	})
 
-	//if err := exporter.Run(ctx); err != nil {
-	//	return fmt.Errorf("failed to export data: %w", err)
-	//}
+	if err := exporter.Run(ctx); err != nil {
+		return fmt.Errorf("failed to export data: %w", err)
+	}
 	return nil
 }

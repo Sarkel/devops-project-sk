@@ -7,6 +7,7 @@ import (
 
 	gen "devops/seeder/internal/db/gen"
 
+	"github.com/jaswdr/faker/v2"
 	"github.com/pressly/goose/v3"
 )
 
@@ -15,7 +16,7 @@ func init() {
 }
 
 func upSeedLocations(ctx context.Context, tx *sql.Tx) error {
-	//fake := faker.New()
+	fake := faker.New()
 	queries := gen.New(tx)
 
 	locations := []struct {
@@ -24,8 +25,8 @@ func upSeedLocations(ctx context.Context, tx *sql.Tx) error {
 		latitude  float64
 		longitude float64
 	}{
-		//{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
-		//{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
+		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
+		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
 	}
 
 	for _, loc := range locations {
