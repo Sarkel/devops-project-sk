@@ -267,6 +267,6 @@ jobs:
           -e DB_HOST=localhost \
           -e DB_PORT=${{ env.DB_PORT }} \
           -e DB_SSL_MODE=${{ env.DB_SSL_MODE }} \
-          -e MQTT_BROKER_HOST=localhost \ 
+          -e MQTT_BROKER_HOST=localhost \
           -e MQTT_BROKER_PORT=1883 \
           app:seeder
