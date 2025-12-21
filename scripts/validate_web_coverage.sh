@@ -26,7 +26,7 @@ fi
 
 echo "Current coverage (Statements): $ACTUAL_COVERAGE%"
 
-if (( $(echo "$ACTUAL_COVERAGE < $THRESHOLD" | awk '{print ($1 < $2)}') )); then
+if [ $(echo "$ACTUAL_COVERAGE < $THRESHOLD" | bc) -eq 1 ]; then
     echo "FAILURE: Code coverage is below threshold ($ACTUAL_COVERAGE% < $THRESHOLD%)"
     exit 1
 else
