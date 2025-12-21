@@ -4,6 +4,7 @@
     <inspection_tool class="GoResourceLeak" enabled="true" level="WARNING" enabled_by_default="true">
       <functions>
         <function importPath="devops/app/internal/db" name="WithQ" />
+        <function importPath="devops/seeder/internal/db" name="WithQ" />
       </functions>
     </inspection_tool>
   </profile>

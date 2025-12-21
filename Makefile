@@ -6,8 +6,12 @@ MIGRATIONS_DIR := migrations
 
 APP_DIR := app
 APP_OUTPUT_DIR := app/bin
+
 WEB_DIR := web
 WEB_OUTPUT_DIR := web/dist
+
+SEEDER_DIR := seeder
+SEEDER_OUTPUT_DIR := seeder/bin
 
 # Include .env file if it exists
 -include .env.defaults
@@ -19,7 +23,7 @@ DB_URL ?= postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?
 .PHONY: all help clean \
 		install-tools sqlc migrate-up migrate-down migrate-down-all migrate-create migrate-status \
 		run-migration test-migration \
-		env-setup build-app test-app build-web test-web
+		env-setup build-app test-app build-web test-web build-seeder
 
 # Default target
 help:
@@ -40,6 +44,7 @@ help:
 	@echo "  migrate-status   - Show migration status"
 	@echo "  run-migration    - Run migration sequence"
 	@echo "  test-migration	  - Run CI test migration sequence"
+	@echo "  build-seeder     - Build seeder binary (outputs to $(SEEDER_OUTPUT_DIR)/seeder)"
 	@echo "  env-setup        - Create a .env file from template"
 
 # --- META TARGETS ---
@@ -112,6 +117,7 @@ install-tools:
 sqlc:
 	@echo "Generating Go code from SQL queries..."
 	sqlc generate -f app/sqlc.yml
+	sqlc generate -f seeder/sqlc.yml
 	@echo "Code generation completed!"
 
 migrate-up:
@@ -167,3 +173,10 @@ env-setup:
 		cp .env.defaults .env; \
 		echo ".env file created from template. Please update it with your credentials."; \
 	fi
+
+build-seeder:
+	@echo "=== Building Seeder (OS: $(GOOS), Arch: $(GOARCH)) ==="
+	@rm -rf $(SEEDER_OUTPUT_DIR)
+	@mkdir -p $(SEEDER_OUTPUT_DIR)
+	@go build -C "$(SEEDER_DIR)" -v -o "bin/seeder" "./main.go"
+	@echo "=== Seeder build complete: $(SEEDER_OUTPUT_DIR)/seeder ==="

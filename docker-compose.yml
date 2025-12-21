@@ -58,6 +58,27 @@ services:
     networks:
       - back_net
 
+  seeder:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      target: seeder
+    container_name: dp-seeder-runner
+    env_file: .env
+    restart: no
+    environment:
+      DB_PORT: 5432
+      DB_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+      migration_runner:
+        condition: service_completed_successfully
+    networks:
+      - back_net
+    volumes:
+      - seeder:/seeder
+
   db:
     image: postgres:18-alpine
     container_name: dp-db
@@ -259,6 +280,8 @@ volumes:
   seed_output:
     driver: local
   grafana_data:
+    driver: local
+  seeder:
     driver: local
 
 networks:

@@ -1,14 +1,21 @@
 package main
 
 import (
-	"devops/common/config"
-	"devops/common/db"
-	"devops/common/logger"
+	"context"
+	"devops/seeder/internal/export"
+	"devops/seeder/internal/seeder"
+	"embed"
 	"fmt"
 	"log"
 
-	"github.com/pressly/goose/v3"
+	"devops/common/config"
+	"devops/common/db"
+	"devops/common/logger"
+	_ "devops/seeder/seeds"
 )
+
+//go:embed seeds/.keep
+var baseFS embed.FS
 
 func main() {
 	if err := RunSeeder(); err != nil {
@@ -17,6 +24,8 @@ func main() {
 }
 
 func RunSeeder() error {
+	ctx := context.Background()
+
 	cfg, err := config.Load()
 
 	if err != nil {
@@ -38,15 +47,23 @@ func RunSeeder() error {
 
 	defer db.Close(conManager, l)
 
-	goose.SetTableName("goose_seed_version")
+	s := seeder.New(seeder.Dependencies{
+		Db:  conManager,
+		L:   l,
+		Dir: baseFS,
+	})
 
-	if err := goose.Up(conManager.GetDB(), "."); err != nil {
-		return fmt.Errorf("failed to run migrations: %w", err)
+	if err := s.Run(); err != nil {
+		return fmt.Errorf("failed to seed database: %w", err)
 	}
 
-	return generateReport(conManager)
-}
+	exporter := export.New(export.Dependencies{
+		Db: conManager,
+		L:  l,
+	})
 
-func generateReport(conManager *db.ConManager) error {
+	if err := exporter.Run(ctx); err != nil {
+		return fmt.Errorf("failed to export data: %w", err)
+	}
 	return nil
 }

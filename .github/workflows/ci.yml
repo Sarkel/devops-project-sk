@@ -243,5 +243,25 @@ jobs:
           -e DB_SSL_MODE=${{ env.DB_SSL_MODE }} \
           migrations:test
 
+      - name: Build seeder image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.app
+          target: test
+          load: true
+          tags: app:seeder
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Test seeder
-        run: echo "Placeholder test for seeder"
+        run: |
+          docker run --rm \
+          --network host \
+          -e DB_USER=${{ env.DB_USER }} \
+          -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+          -e DB_NAME=${{ env.DB_NAME }} \
+          -e DB_HOST=localhost \
+          -e DB_PORT=${{ env.DB_PORT }} \
+          -e DB_SSL_MODE=${{ env.DB_SSL_MODE }} \
+          app:seeder

@@ -14,12 +14,13 @@ FROM base AS build
 RUN make build-app
 
 FROM base AS test
-
 RUN make test-app
 
 FROM scratch AS artifact-export
-
 COPY --from=test /app/app/coverage.out /coverage.out
+
+FROM base AS build_seeder
+RUN make build-seeder
 
 FROM alpine:3.23 AS runtime
 
@@ -44,3 +45,9 @@ FROM runtime AS reader
 COPY --from=build /app/app/bin/reader /app/reader
 
 ENTRYPOINT ["/app/reader"]
+
+FROM runtime AS seeder
+
+COPY --from=build_seeder /app/seeder/bin/seeder /app/seeder
+
+ENTRYPOINT ["/app/seeder"]
