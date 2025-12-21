@@ -27,14 +27,6 @@ func upSeedLocations(ctx context.Context, tx *sql.Tx) error {
 	}{
 		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
 		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
-		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
-		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
-		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
-		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
-		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
-		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
-		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
-		{fmt.Sprintf("LOC%07d", fake.RandomDigitNotNull()), fake.Address().City(), fake.Address().Latitude(), fake.Address().Longitude()},
 	}
 
 	for _, loc := range locations {

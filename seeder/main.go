@@ -57,13 +57,13 @@ func RunSeeder() error {
 		return fmt.Errorf("failed to seed database: %w", err)
 	}
 
-	exporter := export.New(export.Dependencies{
-		Db: conManager,
-		L:  l,
-	})
+	//exporter := export.New(export.Dependencies{
+	//	Db: conManager,
+	//	L:  l,
+	//})
 
-	if err := exporter.Run(ctx); err != nil {
-		return fmt.Errorf("failed to export data: %w", err)
-	}
+	//if err := exporter.Run(ctx); err != nil {
+	//	return fmt.Errorf("failed to export data: %w", err)
+	//}
 	return nil
 }
