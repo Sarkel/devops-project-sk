@@ -24,9 +24,18 @@ env:
   DB_SSL_MODE: disable
 
 jobs:
+  config:
+    name: Configure Pipeline
+    runs-on: ubuntu-22.04
+    outputs:
+      runner: ubuntu-22.04
+    steps:
+      - run: echo "Configuring pipeline..."
+
   drift-validation:
     name: Drift Validation
-    runs-on: ubuntu-latest
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,8 +55,8 @@ jobs:
 
   app-pipeline:
     name: App Pipeline
-    runs-on: ubuntu-latest
-    needs: [drift-validation]
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config, drift-validation]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -85,8 +94,8 @@ jobs:
 
   web-pipeline:
     name: Web Pipeline
-    runs-on: ubuntu-latest
-    needs: [drift-validation]
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config, drift-validation]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -124,8 +133,8 @@ jobs:
 
   code-quality-pipeline:
     name: Code Quality Pipeline
-    runs-on: ubuntu-latest
-    needs: [app-pipeline, web-pipeline]
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config, app-pipeline, web-pipeline]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -159,8 +168,8 @@ jobs:
 
   security-pipeline:
     name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    needs: [web-pipeline, app-pipeline]
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config, web-pipeline, app-pipeline]
     permissions:
       actions: read
       contents: read
@@ -198,8 +207,8 @@ jobs:
 
   migration-pipeline:
     name: Migration Pipeline
-    runs-on: ubuntu-latest
-    needs: [drift-validation]
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config, drift-validation]
     services:
       postgres:
         image: postgres:18-alpine
@@ -278,7 +287,8 @@ jobs:
 
   mqtt-pipeline:
     name: MQTT Pipeline
-    runs-on: ubuntu-latest
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -298,8 +308,8 @@ jobs:
 
   push-images:
     name: Push Images to GHCR
-    runs-on: ubuntu-latest
-    needs: [migration-pipeline, code-quality-pipeline, security-pipeline, mqtt-pipeline]
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config, migration-pipeline, code-quality-pipeline, security-pipeline, mqtt-pipeline]
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     permissions:
       contents: read
