@@ -25,6 +25,7 @@ env:
 
 jobs:
   drift-validation:
+    name: Drift Validation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -44,6 +45,7 @@ jobs:
         run: chmod +x scripts/verify_sqlc.sh && ./scripts/verify_sqlc.sh
 
   app-pipeline:
+    name: App Pipeline
     runs-on: ubuntu-latest
     needs: [drift-validation]
     steps:
@@ -82,6 +84,7 @@ jobs:
           if-no-files-found: error
 
   web-pipeline:
+    name: Web Pipeline
     runs-on: ubuntu-latest
     needs: [drift-validation]
     steps:
@@ -120,6 +123,7 @@ jobs:
           if-no-files-found: error
 
   code-quality-pipeline:
+    name: Code Quality Pipeline
     runs-on: ubuntu-latest
     needs: [app-pipeline, web-pipeline]
     steps:
@@ -193,6 +197,7 @@ jobs:
           category: "/language:${{ matrix.language }}"
 
   migration-pipeline:
+    name: Migration Pipeline
     runs-on: ubuntu-latest
     needs: [drift-validation]
     services:
@@ -270,3 +275,81 @@ jobs:
           -e MQTT_BROKER_HOST=localhost \
           -e MQTT_BROKER_PORT=1883 \
           app:seeder
+
+  mqtt-pipeline:
+    name: MQTT Pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build mqtt image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.mqtt
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  push-images:
+    name: Push Images to GHCR
+    runs-on: ubuntu-latest
+    needs: [migration-pipeline, code-quality-pipeline, security-pipeline, mqtt-pipeline]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: api
+            file: docker/Dockerfile.app
+            target: api
+          - name: crawler
+            file: docker/Dockerfile.app
+            target: crawler
+          - name: reader
+            file: docker/Dockerfile.app
+            target: reader
+          - name: seeder
+            file: docker/Dockerfile.app
+            target: seeder
+
+          - name: web
+            file: docker/Dockerfile.proxy
+            target: final
+          - name: migrations
+            file: docker/Dockerfile.migrations
+            target: runner
+          - name: mqtt
+            file: docker/Dockerfile.mqtt
+            target: runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push ${{ matrix.service.name }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.service.file }}
+          target: ${{ matrix.service.target }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/${{ matrix.service.name }}:latest
+            ghcr.io/${{ github.repository }}/${{ matrix.service.name }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
