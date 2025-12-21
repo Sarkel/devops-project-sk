@@ -71,7 +71,17 @@ build-app:
 	@echo "=== Backend Build Complete (Check $(APP_OUTPUT_DIR)/) ==="
 
 test-app:
-	@echo "test app"
+	@echo "=== Running Go tests in $(APP_DIR)/ ==="
+	@go test -C "$(APP_DIR)" -coverprofile=coverage.out -covermode=atomic $$(go list -C "$(APP_DIR)" ./... | grep -v '/gen$$') 2>&1 || true
+	@echo "=== Go tests finished ==="
+	@echo "=== Generating coverage report ==="
+	@if [ -f $(APP_DIR)/coverage.out ]; then \
+		go tool cover -html=$(APP_DIR)/coverage.out -o $(APP_DIR)/coverage.html 2>/dev/null && \
+		echo "Coverage report saved to $(APP_DIR)/coverage.html" || \
+		echo "Coverage data saved to $(APP_DIR)/coverage.out"; \
+	else \
+		echo "No coverage data generated"; \
+	fi
 
 build-web:
 	@echo "=== Building Web Frontend ==="
