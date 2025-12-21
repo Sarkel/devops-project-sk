@@ -136,23 +136,23 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app-coverage
-          path: artifacts/app-test
+          path: artifacts/app-coverage
 
       - name: Download Web coverage artifact
         uses: actions/download-artifact@v4
         with:
           name: web-coverage
-          path: artifacts/web-test
+          path: artifacts/web-coverage
 
       - name: Enforce App coverage threshold
         uses: vladopajic/go-test-coverage@v2
         with:
-          profile: artifacts/app-test/coverage.out
+          profile: artifacts/app-coverage/coverage.out
           threshold-total: ${{ vars.GO_COVERAGE_MIN }}
 
       - name: Enforce Web coverage threshold
         env:
-          BASE_DIR: artifacts/web-test
+          BASE_DIR: artifacts/web-coverage
           THRESHOLD: ${{ vars.WEB_COVERAGE_MIN }}
         run: |
             chmod +x scripts/validate_web_coverage.sh

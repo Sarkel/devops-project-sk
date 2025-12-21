@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-COVERAGE_FILE="${BASE_DIR}/coverage/coverage-summary.json"
+COVERAGE_FILE="${BASE_DIR}/coverage-summary.json"
 
 echo "=== Web Coverage Validation ==="
 echo "Base Directory: $BASE_DIR"
