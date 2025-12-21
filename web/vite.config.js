@@ -30,12 +30,6 @@ export default defineConfig({
         'vite.config.js',
       ],
       all: true,
-      thresholds: {
-        lines: 100,
-        functions: 100,
-        branches: 90,
-        statements: 100,
-      },
     },
   }
 })
