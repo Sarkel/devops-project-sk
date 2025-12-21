@@ -1,0 +1,38 @@
+name: Cleanup
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  delete-old-images:
+    name: Delete old images
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - api
+          - web
+          - crawler
+          - reader
+          - seeder
+          - migrations
+          - mqtt
+    steps:
+      - name: Downcase REPO
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Delete old images
+        uses: snok/container-retention-policy@v2
+        with:
+          image-names: ${{ matrix.image }}
+          account-type: personal
+          keep-at-least: 2
+          org-name: ${{ env.REPO_LC }}
+          filter-tags: "^latest"
+          cut-off: 7 days ago UTC
+          token: ${{ secrets.GITHUB_TOKEN }}
