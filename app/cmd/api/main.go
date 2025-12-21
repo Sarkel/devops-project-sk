@@ -1,8 +1,9 @@
 package main
 
 import (
-	"devops/app/internal/app"
 	"log"
+
+	"devops/app/internal/app"
 )
 
 func main() {
