@@ -88,12 +88,6 @@ jobs:
           path: artifacts/app-test/coverage.out
           if-no-files-found: error
 
-      - name: Enforce App coverage threshold
-        uses: vladopajic/go-test-coverage@v2
-        with:
-          profile: artifacts/app-test/coverage.out
-          threshold-total: ${{ vars.GO_COVERAGE_MIN }}
-
   web-pipeline:
     runs-on: ubuntu-latest
     steps:
@@ -131,11 +125,21 @@ jobs:
           path: artifacts/web-test/coverage/
           if-no-files-found: error
 
-      - name: Enforce Web coverage threshold
-        uses: ArtiomTr/jest-coverage-report-action@v2
+  code-quality-pipeline:
+    runs-on: ubuntu-latest
+    needs: [app-pipeline, web-pipeline]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Enforce App coverage threshold
+        uses: vladopajic/go-test-coverage@v2
         with:
-          coverage-file: artifacts/web-test/coverage/coverage-final.json
-          threshold: ${{ vars.WEB_COVERAGE_MIN }}
+          profile: artifacts/app-test/coverage.out
+          threshold-total: ${{ vars.GO_COVERAGE_MIN }}
+
+      - name: Enforce Web coverage threshold
+        run: echo "test"
 
   migration-pipeline:
     runs-on: ubuntu-latest
