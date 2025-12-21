@@ -336,7 +336,7 @@ jobs:
             target: final
           - name: migrations
             file: docker/Dockerfile.migrations
-            target: final
+            target: runner
           - name: mqtt
             file: docker/Dockerfile.mqtt
             target: ''
