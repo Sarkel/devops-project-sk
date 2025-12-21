@@ -6,10 +6,7 @@ RUN apk add --no-cache make
 
 COPY Makefile .
 
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    make install-tools \
-
+RUN make install-tools
 
 FROM alpine:3.23 AS base
 
