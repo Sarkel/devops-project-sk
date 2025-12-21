@@ -84,7 +84,7 @@ jobs:
       - name: Upload App coverage artifact
         uses: actions/upload-artifact@v4
         with:
-          name: go-coverage
+          name: app-coverage
           path: artifacts/app-test/coverage.out
           if-no-files-found: error
 
@@ -132,6 +132,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download App coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-coverage
+          path: artifacts/app-test
+
+      - name: Download Web coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-coverage
+          path: artifacts/web-test
+
       - name: Enforce App coverage threshold
         uses: vladopajic/go-test-coverage@v2
         with:
@@ -139,7 +151,12 @@ jobs:
           threshold-total: ${{ vars.GO_COVERAGE_MIN }}
 
       - name: Enforce Web coverage threshold
-        run: echo "test"
+        env:
+          BASE_DIR: artifacts/web-test
+          THRESHOLD: ${{ vars.WEB_COVERAGE_MIN }}
+        run: |
+            chmod +x scripts/validate_web_coverage.sh
+            ./scripts/validate_web_coverage.sh
 
   migration-pipeline:
     runs-on: ubuntu-latest
@@ -196,7 +213,7 @@ jobs:
   security:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
-    needs: [app-pipeline, web-pipeline, migration-pipeline]
+    needs: [migration-pipeline, code-quality-pipeline]
     permissions:
       actions: read
       contents: read
