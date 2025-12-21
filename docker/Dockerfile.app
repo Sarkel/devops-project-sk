@@ -6,6 +6,9 @@ RUN apk add --no-cache make
 
 COPY Makefile .
 COPY app ./app
+COPY common ./common
+COPY seeder ./seeder
+COPY go.work .
 
 FROM base AS build
 RUN make build-app
@@ -13,6 +16,10 @@ RUN make build-app
 FROM base AS test
 
 RUN make test-app
+
+FROM scratch AS artifact-export
+
+COPY --from=test /app/app/coverage.out /coverage.out
 
 FROM alpine:3.23 AS runtime
 
