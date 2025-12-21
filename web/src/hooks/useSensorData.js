@@ -17,8 +17,6 @@ export function useSensorData(
 
     let isMounted = true
 
-    console.log('Fetching chart data for:', locationSid, startDate, endDate, aggregation, types)
-
     const typesParam = types.map(t => `types=${t}`).join('&')
     const aggregationParam = aggregation ? `&aggregation=${aggregation}` : ''
     const url = `api/v1/sensors/data?location_sid=${locationSid}&start_datetime=${startDate}:00Z&end_datetime=${endDate}:59Z${aggregationParam}&${typesParam}`
@@ -66,7 +64,6 @@ export function useSensorData(
         setChartData({ labels, datasets })
       })
       .catch(err => {
-        console.error('Error fetching chart data:', err)
         if (isMounted) {
           setChartData({ labels: [], datasets: [] })
         }

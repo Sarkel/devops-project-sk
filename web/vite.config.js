@@ -17,5 +17,25 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.js',
     css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.test.{js,jsx}',
+        'dist/',
+        'eslint.config.js',
+        'vite.config.js',
+      ],
+      all: true,
+      thresholds: {
+        lines: 100,
+        functions: 100,
+        branches: 90,
+        statements: 100,
+      },
+    },
   }
 })

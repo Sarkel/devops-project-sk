@@ -15,6 +15,10 @@ FROM base AS test
 
 RUN make test-web
 
+FROM scratch AS artifact-export
+
+COPY --from=test /app/web/coverage /coverage
+
 FROM nginx:1.21.6-alpine AS final
 
 # envsubst do wstrzykiwania wartości z env w config
