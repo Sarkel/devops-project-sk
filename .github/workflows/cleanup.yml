@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       packages: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -22,17 +23,14 @@ jobs:
           - migrations
           - mqtt
     steps:
-      - name: Downcase REPO
-        run: |
-          echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Delete old images
-        uses: snok/container-retention-policy@v2
-        with:
-          image-names: ${{ matrix.image }}
-          account-type: personal
-          keep-at-least: 2
-          org-name: ${{ env.OWNER_LC }}
-          filter-tags: "^latest"
-          cut-off: 7 days ago UTC
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Execute Cleanup Script
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_NAME: ${{ matrix.image }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          chmod +x scripts/delete_old_versions.sh
+          ./scripts/delete_old_versions.sh
