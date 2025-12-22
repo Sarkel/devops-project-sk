@@ -4,7 +4,7 @@ name: devops-project-sk
 
 services:
   reverse-proxy:
-    image: ghcr.io/sarkel/devops-project-sk/web:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/web:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.proxy
@@ -43,7 +43,7 @@ services:
       - back_net
 
   migration_runner:
-    image: ghcr.io/sarkel/devops-project-sk/migrations:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/migrations:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.migrations
@@ -61,7 +61,7 @@ services:
       - back_net
 
   seeder:
-    image: ghcr.io/sarkel/devops-project-sk/seeder:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/seeder:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.app
@@ -104,7 +104,7 @@ services:
       start_period: 10s
 
   mqtt:
-    image: ghcr.io/sarkel/devops-project-sk/mqtt:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/mqtt:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.mqtt
@@ -128,7 +128,7 @@ services:
       start_period: 5s
 
   api:
-    image: ghcr.io/sarkel/devops-project-sk/api:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/api:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.app
@@ -158,7 +158,7 @@ services:
       start_period: 5s
 
   reader:
-    image: ghcr.io/sarkel/devops-project-sk/reader:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/reader:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.app
@@ -182,7 +182,7 @@ services:
       - back_net
 
   crawler:
-    image: ghcr.io/sarkel/devops-project-sk/crawler:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/crawler:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.app
