@@ -37,6 +37,7 @@ jobs:
     outputs:
       acr_login_server: ${{ steps.tf-output.outputs.acr_login_server }}
       acr_admin_username: ${{ steps.tf-output.outputs.acr_admin_username }}
+      acr_admin_password: ${{ steps.tf-output.outputs.acr_admin_password }}
       vm_public_ip: ${{ steps.tf-output.outputs.vm_public_ip }}
       vm_private_key: ${{ steps.tf-output.outputs.vm_private_key }}
     steps:
@@ -75,6 +76,7 @@ jobs:
         run: |
           echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
           echo "acr_admin_username=$(terraform output -raw acr_admin_username)" >> $GITHUB_OUTPUT
+          echo "acr_admin_password=$(terraform output -raw acr_admin_password)" >> $GITHUB_OUTPUT
           echo "vm_public_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
           echo "vm_private_key=$(terraform output -raw vm_private_key)" >> $GITHUB_OUTPUT
 
@@ -101,8 +103,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ needs.infrastructure.outputs.acr_login_server }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          username: ${{ needs.infrastructure.outputs.acr_admin_username }}
+          password: ${{ needs.infrastructure.outputs.acr_admin_password }}
 
       - name: Pull, Retag and Push
         run: |
