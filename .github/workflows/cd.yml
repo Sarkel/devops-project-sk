@@ -1,0 +1,117 @@
+name: CD Pipeline
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  TF_WORKING_DIR: 'infra'
+  ARM_CLIENT_ID: ${{ secrets.AZ_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZ_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZ_TENANT_ID }}
+
+  TARGET_REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }} # np. acrdevopssk.azurecr.io
+  REPO_OWNER: sarkel/devops-project-sk
+
+
+jobs:
+  config:
+    name: Configure Pipeline
+    runs-on: ubuntu-22.04
+    outputs:
+      runner: ubuntu-22.04
+    steps:
+      - run: echo "Configuring pipeline..."
+
+  infrastructure:
+    name: Provision Infrastructure
+    needs: [config]
+    runs-on: ${{ needs.config.outputs.runner }}
+    env:
+      TF_BACKEND_KEY: "${{}}.terraform.tfstate"
+    outputs:
+      acr_login_server: ${{ steps.tf-output.outputs.acr_login_server }}
+      acr_admin_username: ${{ steps.tf-output.outputs.acr_admin_username }}
+      vm_public_ip: ${{ steps.tf-output.outputs.vm_public_ip }}
+      vm_private_key: ${{ steps.tf-output.outputs.vm_private_key }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        # WAŻNE: W prawdziwym CD musisz mieć zdalny backend (np. Azure Storage),
+        # inaczej Terraform będzie próbował tworzyć zasoby od zera przy każdym uruchomieniu.
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{vars.TF_AZ_BACK_RG_NAME}}" \
+            -backend-config="storage_account_name=${{vars.TF_AZ_BACK_STORAGE_ACC_NAME}}" \
+            -backend-config="container_name=${{vars.TF_AZ_CONTAINER_NAME}}" \
+            -backend-config="key=${{env.TF_BACKEND_KEY}}"
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan
+
+      - name: Terraform Apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -auto-approve
+
+      - name: Get Terraform Outputs
+        id: tf-output
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
+          echo "acr_admin_username=$(terraform output -raw acr_admin_username)" >> $GITHUB_OUTPUT
+          echo "vm_public_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
+          echo "vm_private_key=$(terraform output -raw vm_private_key)" >> $GITHUB_OUTPUT
+
+  promote-images:
+    name: Promote Images to ACR
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config, infrastructure]
+    strategy:
+      matrix:
+        service: [api, web, migrations, seeder, mqtt, reader, crawler]
+    steps:
+      - name: Downcase REPO
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Docker Login to GHCR (Source)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker Login to ACR (Target)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ needs.infrastructure.outputs.acr_login_server }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Pull, Retag and Push
+        run: |
+          SOURCE_IMAGE="${{ env.SOURCE_REGISTRY }}/${{ env.REPO_LC }}/${{ matrix.service }}:${{ github.sha }}"
+          
+          TARGET_IMAGE="${{ needs.infrastructure.outputs.acr_login_server }}/${{ matrix.service }}:${{ github.ref_name }}"
+          
+          echo "Promoting $SOURCE_IMAGE to $TARGET_IMAGE"
+          
+          docker pull $SOURCE_IMAGE
+          docker tag $SOURCE_IMAGE $TARGET_IMAGE
+          docker push $TARGET_IMAGE
