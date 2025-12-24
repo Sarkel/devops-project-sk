@@ -30,10 +30,9 @@ jobs:
 
   infrastructure:
     name: Provision Infrastructure
+    environment: PROD
     needs: [config]
     runs-on: ${{ needs.config.outputs.runner }}
-    env:
-      TF_BACKEND_KEY: "${{}}.terraform.tfstate"
     outputs:
       acr_login_server: ${{ steps.tf-output.outputs.acr_login_server }}
       acr_admin_username: ${{ steps.tf-output.outputs.acr_admin_username }}
@@ -56,7 +55,7 @@ jobs:
             -backend-config="resource_group_name=${{vars.TF_AZ_BACK_RG_NAME}}" \
             -backend-config="storage_account_name=${{vars.TF_AZ_BACK_STORAGE_ACC_NAME}}" \
             -backend-config="container_name=${{vars.TF_AZ_CONTAINER_NAME}}" \
-            -backend-config="key=${{env.TF_BACKEND_KEY}}"
+            -backend-config="key=${{vars.TF_AZ_BACK_KEY}}"
 
       - name: Terraform Validate
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -82,6 +81,7 @@ jobs:
 
   promote-images:
     name: Promote Images to ACR
+    environment: PROD
     runs-on: ${{ needs.config.outputs.runner }}
     needs: [config, infrastructure]
     strategy:
