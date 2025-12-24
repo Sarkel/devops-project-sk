@@ -15,9 +15,6 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.AZ_TENANT_ID }}
 
-  TARGET_REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }} # np. acrdevopssk.azurecr.io
-  REPO_OWNER: sarkel/devops-project-sk
-
 
 jobs:
   config:
@@ -42,34 +39,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-#      - name: Set up Azure Login Credentials
-#        shell: bash
-#        id: create-creds
-#        run: |
-#          json_creds=$(jq -n \
-#            --arg clientId "$AZ_CLIENT_ID" \
-#            --arg clientSecret "$AZ_CLIENT_SECRET" \
-#            --arg subscriptionId "$AZ_SUBSCRIPTION_ID" \
-#            --arg tenantId "$AZ_TENANT_ID" \
-#            '{
-#              clientId: $clientId,
-#              clientSecret: $clientSecret,
-#              subscriptionId: $subscriptionId,
-#              tenantId: $tenantId,
-#              activeDirectoryEndpointUrl: "https://login.microsoftonline.com",
-#              resourceManagerEndpointUrl: "https://management.azure.com/"
-#            }'
-#          )
-#
-#          echo "AZURE_JSON<<EOF" >> $GITHUB_OUTPUT
-#          echo "$json_creds" >> $GITHUB_OUTPUT
-#          echo "EOF" >> $GITHUB_OUTPUT
-#
-#      - name: Azure Login
-#        uses: azure/login@v1
-#        with:
-#          creds: ${{ steps.create-creds.outputs.AZURE_JSON }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
