@@ -43,13 +43,39 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up Azure Login Credentials
+        shell: bash
+        id: create-creds
+        run: |
+          json_creds=$(jq -n \
+            --arg clientId "$AZ_CLIENT_ID" \
+            --arg clientSecret "$AZ_CLIENT_SECRET" \
+            --arg subscriptionId "$AZ_SUBSCRIPTION_ID" \
+            --arg tenantId "$AZ_TENANT_ID" \
+            '{
+              clientId: $clientId,
+              clientSecret: $clientSecret,
+              subscriptionId: $subscriptionId,
+              tenantId: $tenantId,
+              activeDirectoryEndpointUrl: "https://login.microsoftonline.com",
+              resourceManagerEndpointUrl: "https://management.azure.com/"
+            }'
+          )
+          
+          echo "AZURE_JSON<<EOF" >> $GITHUB_OUTPUT
+          echo "$json_creds" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ steps.create-creds.outputs.AZURE_JSON }}
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         working-directory: ${{ env.TF_WORKING_DIR }}
-        # WAŻNE: W prawdziwym CD musisz mieć zdalny backend (np. Azure Storage),
-        # inaczej Terraform będzie próbował tworzyć zasoby od zera przy każdym uruchomieniu.
         run: |
           terraform init \
             -backend-config="resource_group_name=${{vars.TF_AZ_BACK_RG_NAME}}" \
