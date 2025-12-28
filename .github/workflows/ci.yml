@@ -325,7 +325,7 @@ jobs:
   push-images:
     name: Push Images to GHCR
     runs-on: ${{ needs.config.outputs.runner }}
-    needs: [config, migration-pipeline, code-quality-pipeline, security-pipeline, mqtt-pipeline]
+    needs: [ config, migration-pipeline, code-quality-pipeline, security-pipeline, docker-validation-pipeline ]
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     permissions:
       contents: read
