@@ -64,7 +64,16 @@ jobs:
 
       - name: Terraform Apply
         working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform apply -auto-approve
+        run: |
+          if [ -n "${{ vars.TF_VAR_LOCATION }}" ]; then 
+            export TF_VAR_location="${{ vars.TF_VAR_LOCATION }}"
+          fi
+          
+          if [ -n "${{ vars.TF_VAR_VM_SIZE }}" ]; then 
+            export TF_VAR_vm_size="${{ vars.TF_VAR_VM_SIZE }}"
+          fi
+          
+          terraform apply -auto-approve
 
       - name: Get Terraform Outputs
         id: tf-output

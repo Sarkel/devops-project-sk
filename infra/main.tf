@@ -30,25 +30,26 @@ provider "tls" {}
 
 provider "random" {}
 
-resource "azurerm_resource_group" "rg" {
-  name     = "rg-${var.project_name}"
-  location = var.location
+locals {
+  project_name = "devops-project-sk"
+  normalized_project_name = replace(local.project_name, "-", "")
 }
 
-locals {
-  normalized_project_name = replace(var.project_name, "-", "")
+resource "azurerm_resource_group" "rg" {
+  name     = "rg-${local.project_name}"
+  location = var.location
 }
 
 resource "azurerm_container_registry" "acr" {
   name                = "acr${local.normalized_project_name}"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
-  sku                 = var.acr_sku
+  sku                 = "Basic"
   admin_enabled       = true
 }
 
 resource "azurerm_virtual_network" "vnet" {
-  name                = "vnet-${var.project_name}"
+  name                = "vnet-${local.project_name}"
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -62,7 +63,7 @@ resource "azurerm_subnet" "subnet" {
 }
 
 resource "azurerm_public_ip" "pip" {
-  name                = "pip-${var.project_name}"
+  name                = "pip-${local.project_name}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Static"
@@ -70,7 +71,7 @@ resource "azurerm_public_ip" "pip" {
 }
 
 resource "azurerm_network_security_group" "nsg" {
-  name                = "nsg-${var.project_name}"
+  name                = "nsg-${local.project_name}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -103,7 +104,7 @@ resource "azurerm_network_security_group" "nsg" {
 }
 
 resource "azurerm_network_interface" "nic" {
-  name                = "nic-${var.project_name}"
+  name                = "nic-${local.project_name}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -203,7 +204,7 @@ resource "azurerm_key_vault_secret" "vm_admin_username" {
 }
 
 resource "azurerm_linux_virtual_machine" "vm" {
-  name                = "vm-${var.project_name}"
+  name                = "vm-${local.project_name}"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   size                = var.vm_size
