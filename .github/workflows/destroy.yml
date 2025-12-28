@@ -1,0 +1,50 @@
+name: Destroy Infrastructure
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Please type "DESTROY" to confirm'
+        required: true
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  TF_WORKING_DIR: 'infra'
+  ARM_CLIENT_ID: ${{ secrets.AZ_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZ_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZ_TENANT_ID }}
+
+jobs:
+  destroy:
+    name: Destroy Infrastructure
+    runs-on: ubuntu-22.04
+    environment: PROD
+    steps:
+      - name: Verify Confirmation
+        if: ${{ inputs.confirmation != 'DESTROY' }}
+        run: |
+          echo "::error::You must enter 'DESTROY' in input to run the pipeline"
+          exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{vars.TF_AZ_BACK_RG_NAME}}" \
+            -backend-config="storage_account_name=${{vars.TF_AZ_BACK_STORAGE_ACC_NAME}}" \
+            -backend-config="container_name=${{vars.TF_AZ_CONTAINER_NAME}}" \
+            -backend-config="key=${{vars.TF_AZ_BACK_KEY}}"
+
+      - name: Terraform Destroy
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform destroy -auto-approve
