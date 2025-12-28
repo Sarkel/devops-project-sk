@@ -78,8 +78,6 @@ jobs:
             exit 1
           fi
           
-          echo "::add-mask::$ACR_PASS"
-          
           # acr outputs
           echo "acr_login_server=$(jq -r '.acr_login_server.value' outputs.json)" >> $GITHUB_OUTPUT
           echo "acr_admin_username=$(jq -r '.acr_admin_username.value' outputs.json)" >> $GITHUB_OUTPUT
@@ -97,7 +95,13 @@ jobs:
           jq -r '.vm_private_key.value' outputs.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           
-          rm outputs.json
+
+      - name: Upload Terraform Outputs as Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: terraform-outputs-json
+          path: ${{ env.TF_WORKING_DIR }}/outputs.json
+          retention-days: 5
 
   promote-images:
     name: Promote Images to ACR
