@@ -82,18 +82,20 @@ jobs:
           echo "acr_login_server=$(jq -r '.acr_login_server.value' outputs.json)" >> $GITHUB_OUTPUT
           echo "acr_admin_username=$(jq -r '.acr_admin_username.value' outputs.json)" >> $GITHUB_OUTPUT
           
-          echo "acr_admin_password<<EOF" >> $GITHUB_OUTPUT
-          echo "$ACR_PASS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+#          echo "acr_admin_password<<EOF" >> $GITHUB_OUTPUT
+#          echo "$ACR_PASS" >> $GITHUB_OUTPUT
+#          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "acr_admin_password=$(jq -r '.acr_admin_password.value' outputs.json)" >> $GITHUB_OUTPUT
           
           # vm outputs
           echo "vm_public_ip=$(jq -r '.vm_public_ip.value' outputs.json)" >> $GITHUB_OUTPUT
           echo "vm_admin_username=$(jq -r '.vm_admin_username.value' outputs.json)" >> $GITHUB_OUTPUT
           
           # multiline output
-          echo "vm_private_key<<EOF" >> $GITHUB_OUTPUT
-          jq -r '.vm_private_key.value' outputs.json >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+#          echo "vm_private_key<<EOF" >> $GITHUB_OUTPUT
+#          jq -r '.vm_private_key.value' outputs.json >> $GITHUB_OUTPUT
+#          echo "EOF" >> $GITHUB_OUTPUT
           
 
       - name: Upload Terraform Outputs as Artifact
