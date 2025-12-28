@@ -14,9 +14,9 @@ if ! az acr repository show --name "$ACR_NAME" --repository "$REPOSITORY" > /dev
   exit 0
 fi
 
-DIGESTS_TO_DELETE=$(az acr repository show-manifests \
-  --name "$ACR_NAME" \
-  --repository "$REPOSITORY" \
+DIGESTS_TO_DELETE=$(az acr manifest list-metadata \
+  --registry "$ACR_NAME" \
+  --name "$REPOSITORY" \
   --orderby time_desc \
   --query "[].digest" \
   -o tsv \
