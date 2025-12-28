@@ -17,6 +17,9 @@ env:
 
   SOURCE_REGISTRY: ghcr.io
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   config:
