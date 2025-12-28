@@ -37,6 +37,7 @@ jobs:
       acr_admin_username: ${{ steps.tf-output.outputs.acr_admin_username }}
       acr_admin_password: ${{ steps.tf-output.outputs.acr_admin_password }}
       vm_public_ip: ${{ steps.tf-output.outputs.vm_public_ip }}
+      vm_admin_username: ${{ steps.tf-output.outputs.vm_admin_username }}
       vm_private_key: ${{ steps.tf-output.outputs.vm_private_key }}
     steps:
       - name: Checkout Code
@@ -68,8 +69,10 @@ jobs:
         run: |
           echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
           echo "acr_admin_username=$(terraform output -raw acr_admin_username)" >> $GITHUB_OUTPUT
-          echo "vm_public_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
           echo "acr_admin_password=$(terraform output -raw acr_admin_password)" >> $GITHUB_OUTPUT
+          
+          echo "vm_public_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
+          echo "vm_admin_username=$(terraform output -raw vm_admin_username)" >> $GITHUB_OUTPUT
           
           # multiline output
           echo "vm_private_key<<EOF" >> $GITHUB_OUTPUT
@@ -171,14 +174,12 @@ jobs:
 
       - name: Copy docker-compose to VM
         uses: appleboy/scp-action@v0.1.7
-        env:
-          VM_USER: ${{ needs.infrastructure.outputs.vm_admin_username }}
         with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
+          host: ${{ needs.infrastructure.outputs.vm_public_ip }}
+          username: ${{ needs.infrastructure.outputs.vm_admin_username }}
+          key: ${{ needs.infrastructure.outputs.vm_private_key }}
           source: "docker-compose.yml, .env.default, .env"
-          target: "/home/${{ env.VM_USER }}/app"
+          target: "/home/${{ needs.infrastructure.outputs.vm_admin_username }}/app"
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
