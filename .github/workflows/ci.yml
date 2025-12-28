@@ -285,8 +285,8 @@ jobs:
           -e MQTT_BROKER_PORT=1883 \
           app:seeder
 
-  mqtt-pipeline:
-    name: MQTT Pipeline
+  docker-validation-pipeline:
+    name: Docker Validation Pipeline
     runs-on: ${{ needs.config.outputs.runner }}
     needs: [config]
     strategy:
