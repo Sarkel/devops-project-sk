@@ -95,14 +95,8 @@ jobs:
           echo "vm_private_key<<EOF" >> $GITHUB_OUTPUT
           jq -r '.vm_private_key.value' outputs.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-
-      - name: Upload Terraform Outputs as Artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: terraform-outputs-json
-          path: ${{ env.TF_WORKING_DIR }}/outputs.json
-          retention-days: 5
+          
+          rm outputs.json
 
   promote-images:
     name: Promote Images to ACR
