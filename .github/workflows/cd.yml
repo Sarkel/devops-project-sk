@@ -168,7 +168,7 @@ jobs:
     name: Deploy to Production VM
     environment:
       name: PROD
-      url: ${{ needs.infrastructure.outputs.vm_public_ip }}
+      url: "http://${{ needs.infrastructure.outputs.vm_public_ip }}"
     runs-on: ${{ needs.config.outputs.runner }}
     needs: [ config, infrastructure, promote-images ]
     steps:
