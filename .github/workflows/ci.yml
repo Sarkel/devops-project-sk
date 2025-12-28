@@ -86,7 +86,7 @@ jobs:
 #          cache-to: type=gha,mode=max
 #
 #      - name: Upload App coverage artifact
-#        uses: actions/upload-artifact@v4
+#        uses: actions/upload-artifact@v6
 #        with:
 #          name: app-coverage
 #          path: artifacts/app-test/coverage.out
@@ -125,7 +125,7 @@ jobs:
 #          cache-to: type=gha,mode=max
 #
 #      - name: Upload Web coverage report
-#        uses: actions/upload-artifact@v4
+#        uses: actions/upload-artifact@v6
 #        with:
 #          name: web-coverage
 #          path: artifacts/web-test/coverage/
@@ -140,13 +140,13 @@ jobs:
         uses: actions/checkout@v4
 
 #      - name: Download App coverage artifact
-#        uses: actions/download-artifact@v4
+#        uses: actions/download-artifact@v7
 #        with:
 #          name: app-coverage
 #          path: artifacts/app-coverage
 #
 #      - name: Download Web coverage artifact
-#        uses: actions/download-artifact@v4
+#        uses: actions/download-artifact@v7
 #        with:
 #          name: web-coverage
 #          path: artifacts/web-coverage
