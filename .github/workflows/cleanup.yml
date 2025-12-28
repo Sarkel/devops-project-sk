@@ -34,8 +34,12 @@ jobs:
       - name: Execute Cleanup Script
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PACKAGE_NAME: ${{ matrix.image }}
           OWNER: ${{ github.repository_owner }}
         run: |
+          REPO_LC="${GITHUB_REPOSITORY,,}"
+          export PACKAGE_NAME="$REPO_LC/${{matrix.image}}"
+          
+          echo "Processing package: $PACKAGE_NAME"
+          
           chmod +x scripts/delete_old_versions.sh
           ./scripts/delete_old_versions.sh

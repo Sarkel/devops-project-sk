@@ -25,7 +25,7 @@ fi
 if ! gh api "/$SCOPE/$OWNER/packages/container/$PACKAGE_NAME_ENCODED/versions" --silent > /dev/null 2>&1; then
   echo "Warning: Package '$PACKAGE_NAME' NOT found."
 
-  echo "Listing packages linked to repository '$GITHUB_REPOSITORY' to show valid names:"
+  echo "🔍 Listing packages linked to repository '$GITHUB_REPOSITORY' to show valid names:"
 
   REPO_PACKAGES=$(gh api "/repos/$GITHUB_REPOSITORY/packages?package_type=container" --jq '.[].name' 2>/dev/null || echo "")
 
@@ -36,7 +36,6 @@ if ! gh api "/$SCOPE/$OWNER/packages/container/$PACKAGE_NAME_ENCODED/versions" -
      echo ""
      echo "💡 HINT: Update your 'cleanup.yml' matrix to match one of the names above exactly."
   fi
-
   exit 0
 fi
 
