@@ -81,6 +81,8 @@ jobs:
     environment: PROD
     runs-on: ${{ needs.config.outputs.runner }}
     needs: [config, infrastructure]
+    outputs:
+      target_image_tag: ${{ steps.push-image-tag.outputs.target_image_tag }}
     strategy:
       matrix:
         service: [api, web, migrations, seeder, mqtt, reader, crawler]
@@ -104,13 +106,92 @@ jobs:
           password: ${{ needs.infrastructure.outputs.acr_admin_password }}
 
       - name: Pull, Retag and Push
+        id: push-image-tag
+        env:
+          TAG_NAME: ${{ github.ref_name }}
         run: |
+          echo "target_image_tag=${{ env.TAG_NAME }}" >> $GITHUB_OUTPUT
+          
           SOURCE_IMAGE="${{ env.SOURCE_REGISTRY }}/${{ env.REPO_LC }}/${{ matrix.service }}:${{ github.sha }}"
           
-          TARGET_IMAGE="${{ needs.infrastructure.outputs.acr_login_server }}/${{ matrix.service }}:${{ github.ref_name }}"
+          TARGET_IMAGE="${{ needs.infrastructure.outputs.acr_login_server }}/${{ matrix.service }}:${{ env.TAG_NAME }}"
           
           echo "Promoting $SOURCE_IMAGE to $TARGET_IMAGE"
           
           docker pull $SOURCE_IMAGE
           docker tag $SOURCE_IMAGE $TARGET_IMAGE
           docker push $TARGET_IMAGE
+
+  deploy:
+    name: Deploy to Production VM
+    environment: PROD
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [ config, infrastructure, promote-images ]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create .env file for Runtime
+        run: |
+          echo "Generating production .env file..."
+          
+          # image helpers
+          echo "TAG=${{ needs.promote-images.outputs.target_image_tag }}" >> .env
+          echo "REGISTRY=${{ needs.infrastructure.outputs.acr_login_server }}" >> .env
+          
+          # env vars
+          echo "ENV=PROD" >> .env
+          echo "GO_ENV=PROD" >> .env
+          
+          # postgres
+          echo "DB_USER=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          
+          # mqtt
+          echo "MQTT_BROKER_USERNAME=${{ secrets.MQTT_BROKER_USERNAME }}" >> .env
+          echo "MQTT_BROKER_PASSWORD=${{ secrets.MQTT_BROKER_PASSWORD }}" >> .env
+          
+          # service auth
+          echo "AUTH_KEY_VAL=${{ secrets.AUTH_KEY_VAL }}" >> .env
+          
+          # basic auth
+          echo "BASIC_AUTH_USER=${{ secrets.BASIC_AUTH_USER }}" >> .env
+          echo "BASIC_AUTH_PASSWORD=${{ secrets.BASIC_AUTH_PASSWORD }}" >> .env
+          
+          # grafana
+          echo "GRAFANA_USER=${{ secrets.GRAFANA_USER }}" >> .env
+          echo "GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}" >> .env
+
+      - name: Copy docker-compose to VM
+        uses: appleboy/scp-action@v0.1.7
+        env:
+          VM_USER: ${{ needs.infrastructure.outputs.vm_admin_username }}
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: "docker-compose.yml, .env.default, .env"
+          target: "/home/${{ env.VM_USER }}/app"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          VM_USER: ${{ needs.infrastructure.outputs.vm_admin_username }}
+          ACR_USERNAME: ${{ needs.infrastructure.outputs.acr_admin_username }}
+          ACR_PASSWORD: ${{ needs.infrastructure.outputs.acr_admin_password }}
+          ACR_LOGIN_SERVER: ${{ needs.infrastructure.outputs.acr_login_server }}
+        with:
+          host: ${{ needs.infrastructure.outputs.vm_public_ip }}
+          username: ${{ needs.infrastructure.outputs.vm_admin_username }}
+          key: ${{ needs.infrastructure.outputs.vm_private_key }}
+          script: |
+            cd /home/${{ env.VM_USER }}/app
+
+            docker login ${{ env.ACR_LOGIN_SERVER }} \
+              -u ${{ env.ACR_USERNAME }} \
+              -p ${{ env.ACR_PASSWORD }}
+
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker system prune -f
