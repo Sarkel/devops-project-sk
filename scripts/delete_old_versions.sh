@@ -22,10 +22,12 @@ if gh api "/orgs/$OWNER" --silent > /dev/null 2>&1; then
   SCOPE="orgs"
 fi
 
+echo "/$SCOPE/$OWNER/packages/container/$PACKAGE_NAME_ENCODED/versions"
+
 if ! gh api "/$SCOPE/$OWNER/packages/container/$PACKAGE_NAME_ENCODED/versions" --silent > /dev/null 2>&1; then
   echo "Warning: Package '$PACKAGE_NAME' NOT found."
 
-  echo "🔍 Listing packages linked to repository '$GITHUB_REPOSITORY' to show valid names:"
+  echo "Listing packages linked to repository '$GITHUB_REPOSITORY' to show valid names:"
 
   REPO_PACKAGES=$(gh api "/repos/$GITHUB_REPOSITORY/packages?package_type=container" --jq '.[].name' 2>/dev/null || echo "")
 
