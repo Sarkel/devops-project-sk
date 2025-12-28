@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   packages: read
+  actions: read # Required to read workflow status
 
 env:
   TF_WORKING_DIR: 'infra'
@@ -30,10 +31,33 @@ jobs:
     steps:
       - run: echo "Configuring pipeline..."
 
+  wait-for-ci:
+    name: Wait for CI to Complete
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [config]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Wait for CI Pipeline
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Waiting for CI pipeline to finish for commit $GITHUB_SHA..."
+          
+          # Use GitHub CLI to watch the run associated with this commit and specific workflow file
+          # --exit-status ensures this step fails if the CI pipeline fails
+          gh run watch \
+            -R ${{ github.repository }} \
+            --commit ${{ github.sha }} \
+            --workflow ci.yml \
+            --interval 30 \
+            --exit-status
+
   infrastructure:
     name: Provision Infrastructure
     environment: PROD
-    needs: [config]
+    needs: [config, wait-for-ci]
     runs-on: ${{ needs.config.outputs.runner }}
     outputs:
       acr_login_server: ${{ steps.tf-output.outputs.acr_login_server }}
