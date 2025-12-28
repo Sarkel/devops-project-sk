@@ -162,7 +162,7 @@ locals {
   vm_key_name = "vm-ssh"
 }
 
-# Store Private Key in Key Vault
+# Store VM Private Key in Key Vault
 resource "azurerm_key_vault_secret" "ssh_private_key" {
   name         = "${local.vm_key_name}-private-key"
   value        = tls_private_key.ssh.private_key_pem
@@ -172,7 +172,28 @@ resource "azurerm_key_vault_secret" "ssh_private_key" {
   depends_on = [azurerm_key_vault.kv]
 }
 
-# Store Public Key in Key Vault
+# Store VM Public Key in Key Vault
+resource "azurerm_key_vault_secret" "ssh_public_key" {
+  name         = "${local.vm_key_name}-public-key"
+  value        = tls_private_key.ssh.public_key_openssh
+  key_vault_id = azurerm_key_vault.kv.id
+
+  depends_on = [azurerm_key_vault.kv]
+}
+
+resource "random_string" "vm_user_suffix" {
+  length  = 4
+  lower   = true
+  upper   = false
+  numeric = true
+  special = false
+}
+
+locals {
+  vm_admin_username = "admin_${random_string.vm_user_suffix.result}"
+}
+
+# Store VM admin username
 resource "azurerm_key_vault_secret" "ssh_public_key" {
   name         = "${local.vm_key_name}-public-key"
   value        = tls_private_key.ssh.public_key_openssh
@@ -186,13 +207,13 @@ resource "azurerm_linux_virtual_machine" "vm" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   size                = var.vm_size
-  admin_username      = var.vm_admin_username
+  admin_username      = local.vm_admin_username
   network_interface_ids = [
     azurerm_network_interface.nic.id,
   ]
 
   admin_ssh_key {
-    username   = var.vm_admin_username
+    username   = local.vm_admin_username
     public_key = tls_private_key.ssh.public_key_openssh
   }
 
@@ -210,6 +231,6 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   # vm setup script
   custom_data = base64encode(templatefile("${path.module}/vm-setup.sh.tmpl", {
-    admin_user = var.vm_admin_username
+    admin_user = local.vm_admin_username
   }))
 }

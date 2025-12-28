@@ -17,8 +17,3 @@ variable "vm_size" {
   type = string
   default = "Standard_B1s"
 }
-
-variable "vm_admin_username" {
-  type = string
-  default = "adminuser" # todo: remove and move to pipeline config
-}
