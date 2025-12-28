@@ -116,22 +116,6 @@ jobs:
         run: |
           echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
-      - name: Docker Login to GHCR (Source)
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Test ACR
-        run: |
-          echo "${{ needs.infrastructure.outputs.acr_login_server }}"
-          echo "${{ needs.infrastructure.outputs.acr_admin_username }}"
-          echo "${{ needs.infrastructure.outputs.acr_admin_password_base64 }}"
-          echo "${{ needs.infrastructure.outputs.vm_private_key }}"
-          echo "${{ needs.infrastructure.outputs.vm_public_ip }}"
-          echo "${{ needs.infrastructure.outputs.vm_admin_username }}"
-
       - name: Decode Credentials
         run: |
           ENCODED="${{ needs.infrastructure.outputs.acr_admin_password_base64 }}"
@@ -139,6 +123,13 @@ jobs:
           DECODED=$(echo "$ENCODED" | base64 -d)
           
           echo "ACR_PASSWORD=$DECODED" >> $GITHUB_ENV
+
+      - name: Docker Login to GHCR (Source)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker Login to ACR (Target)
         uses: docker/login-action@v3
