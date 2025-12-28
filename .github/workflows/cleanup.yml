@@ -4,34 +4,34 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+env:
+  TF_WORKING_DIR: 'infra'
+
 jobs:
-  delete-old-images:
-    name: Delete old images
+  config:
+    name: Configure Pipeline
     runs-on: ubuntu-22.04
+    outputs:
+      runner: ubuntu-22.04
+    steps:
+      - run: echo "Configuring pipeline..."
+
+  delete-gce-images:
+    name: Delete old GHCR images
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [ config ]
     permissions:
       packages: write
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        image:
-          - api
-          - web
-          - crawler
-          - reader
-          - seeder
-          - migrations
-          - mqtt
-          - scheduler
-          - grafana
-          - prometheus
-          - loki
-          - promtail
+        image: [ api, web, migrations, seeder, mqtt, reader, crawler, scheduler, grafana, prometheus, loki, promtail ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Execute Cleanup Script
+      - name: GHCR Cleanup
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OWNER: ${{ github.repository_owner }}
@@ -43,5 +43,72 @@ jobs:
           
           echo "Processing package: $PACKAGE_NAME"
           
-          chmod +x scripts/delete_old_versions.sh
-          ./scripts/delete_old_versions.sh
+          chmod +x scripts/delete_ghce_versions.sh
+          ./scripts/delete_ghce_versions.sh
+
+  get-infra-config:
+    name: Fetch Config from TF
+    runs-on: ${{ needs.config.outputs.runner }}
+    needs: [ config ]
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZ_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZ_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZ_TENANT_ID }}
+    outputs:
+      acr_name: ${{ steps.tf-output.outputs.acr_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{vars.TF_AZ_BACK_RG_NAME}}" \
+            -backend-config="storage_account_name=${{vars.TF_AZ_BACK_STORAGE_ACC_NAME}}" \
+            -backend-config="container_name=${{vars.TF_AZ_CONTAINER_NAME}}" \
+            -backend-config="key=${{vars.TF_AZ_BACK_KEY}}"
+
+      - name: Get Terraform Outputs
+        id: tf-output
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          ACR_NAME=$(terraform output -raw acr_name)
+
+          echo "Found ACR Name: $ACR_NAME"
+          echo "acr_name=$ACR_NAME" >> "$GITHUB_OUTPUT"
+
+  delete-acr-images:
+    name: Delete old ACR images
+    needs: [ get-infra-config, config ]
+    runs-on: ${{ needs.config.outputs.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [ api, web, migrations, seeder, mqtt, reader, crawler, scheduler, grafana, prometheus, loki, promtail ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: >-
+            {
+              "clientId": "${{ secrets.AZ_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZ_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZ_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZ_TENANT_ID }}"
+            }
+
+      - name: Cleanup ACR Repository
+        env:
+          ACR_NAME: ${{ needs.get-infra-config.outputs.acr_name }}
+          REPOSITORY: ${{ matrix.image }}
+        run: |
+          chmod +x scripts/delete_acr_versions.sh
+          ./scripts/delete_acr_versions.sh

@@ -11,6 +11,10 @@ output "acr_admin_password" {
   sensitive = true
 }
 
+output "acr_name" {
+  value = azurerm_container_registry.acr.name
+}
+
 output "vm_public_ip" {
   value = azurerm_public_ip.pip.ip_address
 }
