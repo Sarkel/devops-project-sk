@@ -40,18 +40,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-#      - name: Set up Go
-#        uses: actions/setup-go@v4
-#        with:
-#          go-version: ${{ env.GO_VERSION }}
-#          cache: true
-#          cache-dependency-path: "**/*.sum"
-#
-#      - name: Install Migration Tools
-#        run: make install-tools
-#
-#      - name: Verify SQLC Generation
-#        run: chmod +x scripts/verify_sqlc.sh && ./scripts/verify_sqlc.sh
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: "**/*.sum"
+
+      - name: Install Migration Tools
+        run: make install-tools
+
+      - name: Verify SQLC Generation
+        run: chmod +x scripts/verify_sqlc.sh && ./scripts/verify_sqlc.sh
 
   app-pipeline:
     name: App Pipeline
@@ -61,36 +61,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#        with:
-#          driver: docker-container
-#
-#      - name: Build App
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: docker/Dockerfile.app
-#          target: build
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Test App
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: docker/Dockerfile.app
-#          target: artifact-export
-#          outputs: type=local,dest=artifacts/app-test
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Upload App coverage artifact
-#        uses: actions/upload-artifact@v6
-#        with:
-#          name: app-coverage
-#          path: artifacts/app-test/coverage.out
-#          if-no-files-found: error
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Build App
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.app
+          target: build
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test App
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.app
+          target: artifact-export
+          outputs: type=local,dest=artifacts/app-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload App coverage artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: app-coverage
+          path: artifacts/app-test/coverage.out
+          if-no-files-found: error
 
   web-pipeline:
     name: Web Pipeline
@@ -100,36 +100,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#        with:
-#          driver: docker-container
-#
-#      - name: Build Web
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: docker/Dockerfile.proxy
-#          target: build
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Test Web
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: docker/Dockerfile.proxy
-#          target: artifact-export
-#          outputs: type=local,dest=artifacts/web-test
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Upload Web coverage report
-#        uses: actions/upload-artifact@v6
-#        with:
-#          name: web-coverage
-#          path: artifacts/web-test/coverage/
-#          if-no-files-found: error
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Build Web
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.proxy
+          target: build
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Web
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.proxy
+          target: artifact-export
+          outputs: type=local,dest=artifacts/web-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Web coverage report
+        uses: actions/upload-artifact@v6
+        with:
+          name: web-coverage
+          path: artifacts/web-test/coverage/
+          if-no-files-found: error
 
   code-quality-pipeline:
     name: Code Quality Pipeline
@@ -139,31 +139,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-#      - name: Download App coverage artifact
-#        uses: actions/download-artifact@v7
-#        with:
-#          name: app-coverage
-#          path: artifacts/app-coverage
-#
-#      - name: Download Web coverage artifact
-#        uses: actions/download-artifact@v7
-#        with:
-#          name: web-coverage
-#          path: artifacts/web-coverage
-#
-#      - name: Enforce App coverage threshold
-#        uses: vladopajic/go-test-coverage@v2
-#        with:
-#          profile: artifacts/app-coverage/coverage.out
-#          threshold-total: ${{ vars.GO_COVERAGE_MIN }}
-#
-#      - name: Enforce Web coverage threshold
-#        env:
-#          BASE_DIR: artifacts/web-coverage
-#          THRESHOLD: ${{ vars.WEB_COVERAGE_MIN }}
-#        run: |
-#            chmod +x scripts/validate_web_coverage.sh
-#            ./scripts/validate_web_coverage.sh
+      - name: Download App coverage artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: app-coverage
+          path: artifacts/app-coverage
+
+      - name: Download Web coverage artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: web-coverage
+          path: artifacts/web-coverage
+
+      - name: Enforce App coverage threshold
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          profile: artifacts/app-coverage/coverage.out
+          threshold-total: ${{ vars.GO_COVERAGE_MIN }}
+
+      - name: Enforce Web coverage threshold
+        env:
+          BASE_DIR: artifacts/web-coverage
+          THRESHOLD: ${{ vars.WEB_COVERAGE_MIN }}
+        run: |
+            chmod +x scripts/validate_web_coverage.sh
+            ./scripts/validate_web_coverage.sh
 
 
   security-pipeline:
@@ -182,47 +182,47 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
 
-#      - name: Set up Go
-#        uses: actions/setup-go@v5
-#        if: matrix.language == 'go'
-#        with:
-#          go-version: ${{ env.GO_VERSION }}
-#          cache: true
-#          cache-dependency-path: "**/*.sum"
-#
-#      - name: Initialize CodeQL
-#        uses: github/codeql-action/init@v4
-#        with:
-#          languages: ${{ matrix.language }}
-#          queries: security-and-quality
-#
-#      - name: Autobuild
-#        uses: github/codeql-action/autobuild@v4
-#        if: matrix.language == 'go'
-#
-#      - name: Perform CodeQL Analysis
-#        uses: github/codeql-action/analyze@v4
-#        with:
-#          category: "/language:${{ matrix.language }}"
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        if: matrix.language == 'go'
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: "**/*.sum"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+        if: matrix.language == 'go'
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
 
   migration-pipeline:
     name: Migration Pipeline
     runs-on: ${{ needs.config.outputs.runner }}
     needs: [config, drift-validation]
-#    services:
-#      postgres:
-#        image: postgres:18-alpine
-#        env:
-#          POSTGRES_USER: ${{ env.DB_USER }}
-#          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
-#          POSTGRES_DB: ${{ env.DB_NAME }}
-#        ports:
-#          - 5432:5432
-#        options: >-
-#          --health-cmd pg_isready
-#          --health-interval 10s
-#          --health-timeout 5s
-#          --health-retries 5
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: ${{ env.DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.DB_NAME }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout Code
@@ -230,60 +230,60 @@ jobs:
         with:
           fetch-depth: 0
 
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#        with:
-#          driver: docker-container
-#
-#      - name: Build migrations image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: docker/Dockerfile.migrations
-#          target: test
-#          load: true
-#          tags: migrations:test
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Test migrations
-#        run: |
-#          docker run --rm -t \
-#          --network host \
-#          -e DB_USER=${{ env.DB_USER }} \
-#          -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
-#          -e DB_NAME=${{ env.DB_NAME }} \
-#          -e DB_HOST=localhost \
-#          -e DB_PORT=${{ env.DB_PORT }} \
-#          -e DB_SSL_MODE=${{ env.DB_SSL_MODE }} \
-#          migrations:test
-#
-#      - name: Build seeder image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: docker/Dockerfile.app
-#          target: seeder
-#          load: true
-#          tags: app:seeder
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Test seeder
-#        timeout-minutes: 10
-#        # MQTT_BROKER_HOST & MQTT_BROKER_PORT is needed for seeder until the config package is refactored
-#        run: |
-#          docker run --rm -t \
-#          --network host \
-#          -e DB_USER=${{ env.DB_USER }} \
-#          -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
-#          -e DB_NAME=${{ env.DB_NAME }} \
-#          -e DB_HOST=localhost \
-#          -e DB_PORT=${{ env.DB_PORT }} \
-#          -e DB_SSL_MODE=${{ env.DB_SSL_MODE }} \
-#          -e MQTT_BROKER_HOST=localhost \
-#          -e MQTT_BROKER_PORT=1883 \
-#          app:seeder
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Build migrations image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.migrations
+          target: test
+          load: true
+          tags: migrations:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test migrations
+        run: |
+          docker run --rm -t \
+          --network host \
+          -e DB_USER=${{ env.DB_USER }} \
+          -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+          -e DB_NAME=${{ env.DB_NAME }} \
+          -e DB_HOST=localhost \
+          -e DB_PORT=${{ env.DB_PORT }} \
+          -e DB_SSL_MODE=${{ env.DB_SSL_MODE }} \
+          migrations:test
+
+      - name: Build seeder image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.app
+          target: seeder
+          load: true
+          tags: app:seeder
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test seeder
+        timeout-minutes: 10
+        # MQTT_BROKER_HOST & MQTT_BROKER_PORT is needed for seeder until the config package is refactored
+        run: |
+          docker run --rm -t \
+          --network host \
+          -e DB_USER=${{ env.DB_USER }} \
+          -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+          -e DB_NAME=${{ env.DB_NAME }} \
+          -e DB_HOST=localhost \
+          -e DB_PORT=${{ env.DB_PORT }} \
+          -e DB_SSL_MODE=${{ env.DB_SSL_MODE }} \
+          -e MQTT_BROKER_HOST=localhost \
+          -e MQTT_BROKER_PORT=1883 \
+          app:seeder
 
   docker-validation-pipeline:
     name: Docker Validation Pipeline
@@ -309,18 +309,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
 
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#        with:
-#          driver: docker-container
-#
-#      - name: Build ${{ matrix.service.name }} image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: ${{ matrix.service.file }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Build ${{ matrix.service.name }} image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.service.file }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   push-images:
     name: Push Images to GHCR
