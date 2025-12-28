@@ -43,16 +43,37 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Waiting for CI pipeline to finish for commit $GITHUB_SHA..."
+          echo "Looking for CI run ID for commit $GITHUB_SHA..."
           
-          # Use GitHub CLI to watch the run associated with this commit and specific workflow file
-          # --exit-status ensures this step fails if the CI pipeline fails
-          gh run watch \
-            -R ${{ github.repository }} \
-            --commit ${{ github.sha }} \
-            --workflow ci.yml \
-            --interval 30 \
-            --exit-status
+          RUN_ID=""
+          
+          # Retry loop: Attempt to find the Run ID 5 times (waiting 10s between)
+          # This handles race conditions where CD starts before CI is fully registered
+          for i in {1..5}; do
+            RUN_ID=$(gh run list \
+              --workflow ci.yml \
+              --commit $GITHUB_SHA \
+              --json databaseId \
+              --jq '.[0].databaseId')
+          
+            if [ -n "$RUN_ID" ] && [ "$RUN_ID" != "null" ]; then
+              echo "Found CI Run ID: $RUN_ID"
+              break
+            fi
+          
+            echo "CI run not found yet. Retrying in 10s..."
+            sleep 10
+          done
+
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" == "null" ]; then
+            echo "::error::Could not find a CI run for commit $GITHUB_SHA. Ensure ci.yml triggers on this commit."
+            exit 1
+          fi
+
+          echo "Watching Run ID: $RUN_ID"
+          
+          # Watch the specific run ID
+          gh run watch $RUN_ID --exit-status
 
   infrastructure:
     name: Provision Infrastructure
