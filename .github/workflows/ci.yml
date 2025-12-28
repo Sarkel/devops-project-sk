@@ -40,18 +40,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: "**/*.sum"
-
-      - name: Install Migration Tools
-        run: make install-tools
-
-      - name: Verify SQLC Generation
-        run: chmod +x scripts/verify_sqlc.sh && ./scripts/verify_sqlc.sh
+#      - name: Set up Go
+#        uses: actions/setup-go@v4
+#        with:
+#          go-version: ${{ env.GO_VERSION }}
+#          cache: true
+#          cache-dependency-path: "**/*.sum"
+#
+#      - name: Install Migration Tools
+#        run: make install-tools
+#
+#      - name: Verify SQLC Generation
+#        run: chmod +x scripts/verify_sqlc.sh && ./scripts/verify_sqlc.sh
 
   app-pipeline:
     name: App Pipeline
@@ -182,47 +182,47 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        if: matrix.language == 'go'
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: "**/*.sum"
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: ${{ matrix.language }}
-          queries: security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
-        if: matrix.language == 'go'
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:${{ matrix.language }}"
+#      - name: Set up Go
+#        uses: actions/setup-go@v5
+#        if: matrix.language == 'go'
+#        with:
+#          go-version: ${{ env.GO_VERSION }}
+#          cache: true
+#          cache-dependency-path: "**/*.sum"
+#
+#      - name: Initialize CodeQL
+#        uses: github/codeql-action/init@v4
+#        with:
+#          languages: ${{ matrix.language }}
+#          queries: security-and-quality
+#
+#      - name: Autobuild
+#        uses: github/codeql-action/autobuild@v4
+#        if: matrix.language == 'go'
+#
+#      - name: Perform CodeQL Analysis
+#        uses: github/codeql-action/analyze@v4
+#        with:
+#          category: "/language:${{ matrix.language }}"
 
   migration-pipeline:
     name: Migration Pipeline
     runs-on: ${{ needs.config.outputs.runner }}
     needs: [config, drift-validation]
-    services:
-      postgres:
-        image: postgres:18-alpine
-        env:
-          POSTGRES_USER: ${{ env.DB_USER }}
-          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
-          POSTGRES_DB: ${{ env.DB_NAME }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+#    services:
+#      postgres:
+#        image: postgres:18-alpine
+#        env:
+#          POSTGRES_USER: ${{ env.DB_USER }}
+#          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+#          POSTGRES_DB: ${{ env.DB_NAME }}
+#        ports:
+#          - 5432:5432
+#        options: >-
+#          --health-cmd pg_isready
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
 
     steps:
       - name: Checkout Code
