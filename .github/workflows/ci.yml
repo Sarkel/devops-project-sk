@@ -38,7 +38,7 @@ jobs:
     needs: [config]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
 #      - name: Set up Go
 #        uses: actions/setup-go@v4
@@ -59,7 +59,7 @@ jobs:
     needs: [config, drift-validation]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
 #      - name: Set up Docker Buildx
 #        uses: docker/setup-buildx-action@v3
@@ -98,7 +98,7 @@ jobs:
     needs: [config, drift-validation]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
 #      - name: Set up Docker Buildx
 #        uses: docker/setup-buildx-action@v3
@@ -137,7 +137,7 @@ jobs:
     needs: [config, app-pipeline, web-pipeline]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
 #      - name: Download App coverage artifact
 #        uses: actions/download-artifact@v7
@@ -180,7 +180,7 @@ jobs:
         language: [ 'go', 'javascript' ]
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
 #      - name: Set up Go
 #        uses: actions/setup-go@v5
@@ -226,7 +226,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -307,7 +307,7 @@ jobs:
             file: docker/Dockerfile.grafana
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
 #      - name: Set up Docker Buildx
 #        uses: docker/setup-buildx-action@v3
@@ -374,7 +374,7 @@ jobs:
             target: ''
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Downcase REPO
         run: |

@@ -44,7 +44,7 @@ jobs:
       vm_private_key: ${{ steps.tf-output.outputs.vm_private_key }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -173,7 +173,7 @@ jobs:
     needs: [ config, infrastructure, promote-images ]
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Create .env file for Runtime
         run: |
