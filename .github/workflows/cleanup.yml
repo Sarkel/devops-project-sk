@@ -43,11 +43,12 @@ jobs:
           
           echo "Processing package: $PACKAGE_NAME"
           
-          chmod +x scripts/delete_ghce_versions.sh
-          ./scripts/delete_ghce_versions.sh
+          chmod +x scripts/delete_ghcr_versions.sh
+          ./scripts/delete_ghcr_versions.sh
 
   get-infra-config:
     name: Fetch Config from TF
+    environment: PROD
     runs-on: ${{ needs.config.outputs.runner }}
     needs: [ config ]
     env:
@@ -84,6 +85,7 @@ jobs:
 
   delete-acr-images:
     name: Delete old ACR images
+    environment: PROD
     needs: [ get-infra-config, config ]
     runs-on: ${{ needs.config.outputs.runner }}
     strategy:
