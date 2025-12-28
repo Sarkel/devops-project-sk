@@ -67,13 +67,22 @@ jobs:
         id: tf-output
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
+          terraform refresh
+          
           ACR_PASS=$(terraform output -raw acr_admin_password)
           echo "$ACR_PASS"
-          echo "::add-mask::$ACR_PASS"
+          
+          if [ -z "$ACR_PASS" ]; then
+            echo "::error::Terraform returned empty password!"
+            exit 1
+          fi
           
           echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
           echo "acr_admin_username=$(terraform output -raw acr_admin_username)" >> $GITHUB_OUTPUT
-          echo "acr_admin_password=$ACR_PASS" >> $GITHUB_OUTPUT
+          
+          echo "acr_admin_password<<EOF" >> $GITHUB_OUTPUT
+          echo "$ACR_PASS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
           echo "vm_public_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
           echo "vm_admin_username=$(terraform output -raw vm_admin_username)" >> $GITHUB_OUTPUT
