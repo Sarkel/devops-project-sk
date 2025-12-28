@@ -69,27 +69,32 @@ jobs:
         run: |
           terraform refresh
           
-          ACR_PASS=$(terraform output -raw acr_admin_password)
-          echo "$ACR_PASS"
+          TF_JSON=$(terraform output -json)
           
-          if [ -z "$ACR_PASS" ]; then
+          ACR_PASS=$(echo "$TF_JSON" | jq -r '.acr_admin_password.value')
+          
+          if [ -z "$ACR_PASS" ] || [ "$ACR_PASS" == "null" ]; then
             echo "::error::Terraform returned empty password!"
             exit 1
           fi
           
-          echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
-          echo "acr_admin_username=$(terraform output -raw acr_admin_username)" >> $GITHUB_OUTPUT
+          echo "::add-mask::$ACR_PASS"
+          
+          # acr outputs
+          echo "acr_login_server=$(echo "$TF_JSON" | jq -r '.acr_login_server.value')" >> $GITHUB_OUTPUT
+          echo "acr_admin_username=$(echo "$TF_JSON" | jq -r '.acr_admin_username.value')" >> $GITHUB_OUTPUT
           
           echo "acr_admin_password<<EOF" >> $GITHUB_OUTPUT
           echo "$ACR_PASS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           
-          echo "vm_public_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
-          echo "vm_admin_username=$(terraform output -raw vm_admin_username)" >> $GITHUB_OUTPUT
+          # vm outputs
+          echo "vm_public_ip=$(echo "$TF_JSON" | jq -r '.vm_public_ip.value')" >> $GITHUB_OUTPUT
+          echo "vm_admin_username=$(echo "$TF_JSON" | jq -r '.vm_admin_username.value')" >> $GITHUB_OUTPUT
           
           # multiline output
           echo "vm_private_key<<EOF" >> $GITHUB_OUTPUT
-          echo "$(terraform output -raw vm_private_key)" >> $GITHUB_OUTPUT
+          echo "$TF_JSON" | jq -r '.vm_private_key.value' >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
   promote-images:
