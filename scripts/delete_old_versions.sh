@@ -7,17 +7,29 @@ if [ -z "$GH_TOKEN" ] || [ -z "$PACKAGE_NAME" ] || [ -z "$OWNER" ]; then
   exit 1
 fi
 
-echo "--- Processing package: $PACKAGE_NAME (Owner: $OWNER) ---"
+PACKAGE_NAME_ENCODED=${PACKAGE_NAME////%2F}
 
-if ! gh api "/users/$OWNER/packages/container/$PACKAGE_NAME/versions" --silent > /dev/null 2>&1; then
-  echo "Warning: Package '$PACKAGE_NAME' not found or has no versions. Skipping."
+echo "--- Processing package: $PACKAGE_NAME (Encoded: $PACKAGE_NAME_ENCODED) for Owner: $OWNER ---"
+
+SCOPE="users"
+if gh api "/orgs/$OWNER" --silent > /dev/null 2>&1; then
+  SCOPE="orgs"
+  echo "Detected Organization account."
+else
+  echo "Detected User account."
+fi
+
+if ! gh api "/$SCOPE/$OWNER/packages/container/$PACKAGE_NAME_ENCODED/versions" --silent > /dev/null 2>&1; then
+  echo "Warning: Package '$PACKAGE_NAME' not found using path /$SCOPE/$OWNER/packages/container/$PACKAGE_NAME_ENCODED"
+  echo "List of available packages for reference:"
+  gh api "/$SCOPE/$OWNER/packages?package_type=container" --jq '.[].name' || echo "Could not list packages."
   exit 0
 fi
 
 IDS_TO_DELETE=$(gh api \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
-  "/users/$OWNER/packages/container/$PACKAGE_NAME/versions" \
+  "/$SCOPE/$OWNER/packages/container/$PACKAGE_NAME_ENCODED/versions" \
   --jq '[.[] | select(.metadata.container.tags | index("latest") | not)] | .[2:] | .[].id')
 
 if [ -z "$IDS_TO_DELETE" ]; then
@@ -31,7 +43,7 @@ for ID in $IDS_TO_DELETE; do
     --method DELETE \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
-    "/users/$OWNER/packages/container/$PACKAGE_NAME/versions/$ID" || echo "Failed to delete $ID (continuing)"
+    "/$SCOPE/$OWNER/packages/container/$PACKAGE_NAME_ENCODED/versions/$ID" || echo "Failed to delete $ID (continuing)"
 done
 
 echo "--- Finished $PACKAGE_NAME ---"
