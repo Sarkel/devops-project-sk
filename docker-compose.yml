@@ -31,12 +31,13 @@ services:
       start_period: 5s
 
   scheduler:
-    image: mcuadros/ofelia:0.3
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/scheduler:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.scheduler
     container_name: dp-scheduler
-    command: daemon --config /etc/ofelia/config.ini
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./docker/scheduler/ofelia.ini:/etc/ofelia/config.ini:ro
     depends_on:
       - crawler
     networks:

@@ -1,0 +1,5 @@
+FROM mcuadros/ofelia:0.3
+
+COPY docker/scheduler/ofelia.ini /etc/ofelia/config.ini
+
+CMD ["daemon", "--config", "/etc/ofelia/config.ini"]

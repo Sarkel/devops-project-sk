@@ -289,6 +289,14 @@ jobs:
     name: MQTT Pipeline
     runs-on: ${{ needs.config.outputs.runner }}
     needs: [config]
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: mqtt
+            file: docker/Dockerfile.mqtt
+          - name: scheduler
+            file: docker/Dockerfile.scheduler
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -298,11 +306,11 @@ jobs:
         with:
           driver: docker-container
 
-      - name: Build mqtt image
+      - name: Build ${{ matrix.service.name }} image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: docker/Dockerfile.mqtt
+          file: ${{ matrix.service.file }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -337,8 +345,12 @@ jobs:
           - name: migrations
             file: docker/Dockerfile.migrations
             target: runner
+
           - name: mqtt
             file: docker/Dockerfile.mqtt
+            target: ''
+          - name: scheduler
+            file: docker/Dockerfile.scheduler
             target: ''
     steps:
       - name: Checkout code
