@@ -33,6 +33,7 @@ jobs:
 
   wait-for-ci:
     name: Wait for CI to Complete
+    timeout-minutes: 2
     runs-on: ${{ needs.config.outputs.runner }}
     needs: [config]
     steps:
@@ -74,6 +75,13 @@ jobs:
           
           # Watch the specific run ID
           gh run watch $RUN_ID --exit-status
+
+      - name: Report Failure
+        if: failure() && steps.wait-step.outcome == 'failure'
+        run: |
+          echo "::error::CI Pipeline failed or timed out! Cannot proceed with CD."
+          echo "::notice::Check the 'CI Pipeline' workflow execution for details."
+          exit 1
 
   infrastructure:
     name: Provision Infrastructure
