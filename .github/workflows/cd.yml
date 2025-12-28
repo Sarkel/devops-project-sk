@@ -82,6 +82,7 @@ jobs:
           echo "acr_login_server=$(jq -r '.acr_login_server.value' outputs.json)" >> $GITHUB_OUTPUT
           echo "acr_admin_username=$(jq -r '.acr_admin_username.value' outputs.json)" >> $GITHUB_OUTPUT
           
+          # base64 encode password because of the issues with GHA passing output contexts with special characters
           ENCODED_PASS=$(echo -n "$RAW_PASS" | base64 -w 0)
           
           echo "acr_admin_password_base64=$ENCODED_PASS" >> $GITHUB_OUTPUT
@@ -179,6 +180,13 @@ jobs:
         run: |
           echo "Generating production .env file..."
           
+          if [ -f ".env.default" ]; then
+            cp .env.default .env
+            echo "" >> .env
+          else
+            touch .env
+          fi
+          
           # image helpers
           echo "TAG=${{ needs.promote-images.outputs.target_image_tag }}" >> .env
           echo "REGISTRY=${{ needs.infrastructure.outputs.acr_login_server }}" >> .env
@@ -213,7 +221,7 @@ jobs:
           host: ${{ needs.infrastructure.outputs.vm_public_ip }}
           username: ${{ needs.infrastructure.outputs.vm_admin_username }}
           key: ${{ needs.infrastructure.outputs.vm_private_key }}
-          source: "docker-compose.yml, .env.default, .env"
+          source: "docker-compose.yml, .env"
           target: "/home/${{ needs.infrastructure.outputs.vm_admin_username }}/app"
 
       - name: Deploy via SSH
@@ -221,18 +229,21 @@ jobs:
         env:
           VM_USER: ${{ needs.infrastructure.outputs.vm_admin_username }}
           ACR_USERNAME: ${{ needs.infrastructure.outputs.acr_admin_username }}
-          ACR_PASSWORD: ${{ needs.infrastructure.outputs.acr_admin_password }}
           ACR_LOGIN_SERVER: ${{ needs.infrastructure.outputs.acr_login_server }}
         with:
           host: ${{ needs.infrastructure.outputs.vm_public_ip }}
           username: ${{ needs.infrastructure.outputs.vm_admin_username }}
           key: ${{ needs.infrastructure.outputs.vm_private_key }}
           script: |
+            ENCODED="${{ needs.infrastructure.outputs.acr_admin_password_base64 }}"
+
+            ACR_PASSWORD=$(echo "$ENCODED" | base64 -d)
+          
             cd /home/${{ env.VM_USER }}/app
 
             docker login ${{ env.ACR_LOGIN_SERVER }} \
               -u ${{ env.ACR_USERNAME }} \
-              -p ${{ env.ACR_PASSWORD }}
+              -p $ACR_PASSWORD
 
             docker compose pull
             docker compose up -d --remove-orphans

@@ -182,8 +182,8 @@ resource "azurerm_key_vault_secret" "ssh_public_key" {
 }
 
 resource "random_string" "vm_user_suffix" {
-  length  = 4
-  lower   = true
+  length  = 6
+  lower   = false
   upper   = false
   numeric = true
   special = false
