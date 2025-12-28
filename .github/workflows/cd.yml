@@ -173,6 +173,8 @@ jobs:
           if [ -f ".env.defaults" ]; then
             cp .env.defaults .env
             echo "" >> .env
+            echo "" >> .env
+            echo "" >> .env
           else
             touch .env
           fi
