@@ -194,8 +194,8 @@ locals {
 }
 
 # Store VM admin username
-resource "azurerm_key_vault_secret" "ssh_public_key" {
-  name         = "${local.vm_key_name}-public-key"
+resource "azurerm_key_vault_secret" "vm_admin_username" {
+  name         = "vm-admin-username"
   value        = tls_private_key.ssh.public_key_openssh
   key_vault_id = azurerm_key_vault.kv.id
 
