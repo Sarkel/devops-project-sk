@@ -69,7 +69,9 @@ jobs:
         run: |
           terraform refresh
           
-          TF_JSON=$(terraform output -json)
+          terraform output -json > outputs.json
+          
+          ACR_PASS=$(jq -r '.acr_admin_password.value' outputs.json)
           
           ACR_PASS=$(echo "$TF_JSON" | jq -r '.acr_admin_password.value')
           
@@ -81,21 +83,23 @@ jobs:
           echo "::add-mask::$ACR_PASS"
           
           # acr outputs
-          echo "acr_login_server=$(echo "$TF_JSON" | jq -r '.acr_login_server.value')" >> $GITHUB_OUTPUT
-          echo "acr_admin_username=$(echo "$TF_JSON" | jq -r '.acr_admin_username.value')" >> $GITHUB_OUTPUT
+          echo "acr_login_server=$(jq -r '.acr_login_server.value' outputs.json)" >> $GITHUB_OUTPUT
+          echo "acr_admin_username=$(jq -r '.acr_admin_username.value' outputs.json)" >> $GITHUB_OUTPUT
           
           echo "acr_admin_password<<EOF" >> $GITHUB_OUTPUT
           echo "$ACR_PASS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           
           # vm outputs
-          echo "vm_public_ip=$(echo "$TF_JSON" | jq -r '.vm_public_ip.value')" >> $GITHUB_OUTPUT
-          echo "vm_admin_username=$(echo "$TF_JSON" | jq -r '.vm_admin_username.value')" >> $GITHUB_OUTPUT
+          echo "vm_public_ip=$(jq -r '.vm_public_ip.value' outputs.json)" >> $GITHUB_OUTPUT
+          echo "vm_admin_username=$(jq -r '.vm_admin_username.value' outputs.json)" >> $GITHUB_OUTPUT
           
           # multiline output
           echo "vm_private_key<<EOF" >> $GITHUB_OUTPUT
-          echo "$TF_JSON" | jq -r '.vm_private_key.value' >> $GITHUB_OUTPUT
+          jq -r '.vm_private_key.value' outputs.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+          
+          rm outputs.json
 
   promote-images:
     name: Promote Images to ACR
