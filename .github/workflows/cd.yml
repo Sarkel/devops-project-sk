@@ -73,8 +73,6 @@ jobs:
           
           ACR_PASS=$(jq -r '.acr_admin_password.value' outputs.json)
           
-          ACR_PASS=$(echo "$TF_JSON" | jq -r '.acr_admin_password.value')
-          
           if [ -z "$ACR_PASS" ] || [ "$ACR_PASS" == "null" ]; then
             echo "::error::Terraform returned empty password!"
             exit 1
