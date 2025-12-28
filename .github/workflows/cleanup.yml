@@ -36,8 +36,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OWNER: ${{ github.repository_owner }}
         run: |
-          REPO_LC="${GITHUB_REPOSITORY,,}"
-          export PACKAGE_NAME="$REPO_LC/${{matrix.image}}"
+          FULL_REPO="${GITHUB_REPOSITORY,,}"
+          REPO_NAME_ONLY="${FULL_REPO#*/}"
+          
+          export PACKAGE_NAME="$REPO_NAME_ONLY/${{ matrix.image }}"
           
           echo "Processing package: $PACKAGE_NAME"
           
