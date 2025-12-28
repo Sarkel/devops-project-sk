@@ -166,7 +166,7 @@ locals {
 # Store VM Private Key in Key Vault
 resource "azurerm_key_vault_secret" "ssh_private_key" {
   name         = "${local.vm_key_name}-private-key"
-  value        = tls_private_key.ssh.private_key_pem
+  value        = tls_private_key.ssh.private_key_openssh
   key_vault_id = azurerm_key_vault.kv.id
 
   # Ensure access policy is set before writing secret
