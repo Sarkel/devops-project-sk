@@ -174,8 +174,8 @@ jobs:
         run: |
           echo "Generating production .env file..."
           
-          if [ -f ".env.default" ]; then
-            cp .env.default .env
+          if [ -f ".env.defaults" ]; then
+            cp .env.defaults .env
             echo "" >> .env
           else
             touch .env
