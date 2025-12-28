@@ -85,7 +85,7 @@ jobs:
       target_image_tag: ${{ steps.push-image-tag.outputs.target_image_tag }}
     strategy:
       matrix:
-        service: [api, web, migrations, seeder, mqtt, reader, crawler, scheduler]
+        service: [api, web, migrations, seeder, mqtt, reader, crawler, scheduler, grafana, prometheus, loki, promtail]
     steps:
       - name: Downcase REPO
         run: |

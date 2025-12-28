@@ -2,6 +2,16 @@ FROM eclipse-mosquitto:2.0.18
 
 WORKDIR /app
 
+COPY docker/mosquitto/config/mosquitto.conf /mosquitto/config/mosquitto.conf
+
 COPY ./scripts/start_mqtt.sh .
+
+USER root
+
+RUN chmod +x start_mqtt.sh
+
+RUN chown -R mosquitto:mosquitto /mosquitto/config
+
+USER mosquitto
 
 ENTRYPOINT ["./start_mqtt.sh"]

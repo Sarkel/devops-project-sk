@@ -1,0 +1,6 @@
+FROM grafana/promtail:2.5.0
+
+USER root
+RUN (apt-get update || true) && apt-get install -y wget
+
+COPY docker/monitoring/promtail.yml /etc/promtail/config.yml

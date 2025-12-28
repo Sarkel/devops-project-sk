@@ -297,6 +297,14 @@ jobs:
             file: docker/Dockerfile.mqtt
           - name: scheduler
             file: docker/Dockerfile.scheduler
+          - name: prometheus
+            file: docker/Dockerfile.prometheus
+          - name: loki
+            file: docker/Dockerfile.loki
+          - name: promtail
+            file: docker/Dockerfile.promtail
+          - name: grafana
+            file: docker/Dockerfile.grafana
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -351,6 +359,18 @@ jobs:
             target: ''
           - name: scheduler
             file: docker/Dockerfile.scheduler
+            target: ''
+          - name: prometheus
+            file: docker/Dockerfile.prometheus
+            target: ''
+          - name: loki
+            file: docker/Dockerfile.loki
+            target: ''
+          - name: promtail
+            file: docker/Dockerfile.promtail
+            target: ''
+          - name: grafana
+            file: docker/Dockerfile.grafana
             target: ''
     steps:
       - name: Checkout code

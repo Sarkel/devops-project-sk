@@ -22,7 +22,7 @@ services:
       api:
         condition: service_healthy
       grafana:
-        condition: service_completed_successfully
+        condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "wget -qO- http://localhost/health || exit 1" ]
       interval: 10s
@@ -116,7 +116,6 @@ services:
     expose:
       - 1883
     volumes:
-      - ./docker/mosquitto/config:/mosquitto/config
       - ./docker/mosquitto/data:/mosquitto/data
       - ./docker/mosquitto/log:/mosquitto/log
     networks:
@@ -213,36 +212,52 @@ services:
 
   # metrics & observability
   prometheus:
-    image: prom/prometheus:v2.36.1
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/prometheus:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.prometheus
     container_name: dp-prometheus
     restart: unless-stopped
-    volumes:
-      - ./docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     expose:
       - 9090
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     networks:
       - back_net
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   loki:
-    image: grafana/loki:2.5.0
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/loki:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.loki
     container_name: dp-loki
     restart: unless-stopped
-    volumes:
-      - ./docker/monitoring/loki-config.yaml:/etc/loki/local-config.yaml
     command: -config.file=/etc/loki/local-config.yaml
     expose:
       - 3100
     networks:
       - back_net
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:3100/ready || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   promtail:
-    image: grafana/promtail:2.5.0
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/promtail:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.promtail
     container_name: dp-promtail
     restart: unless-stopped
     volumes:
-      - ./docker/monitoring/promtail.yml:/etc/promtail/config.yml
       - nginx_logs:/var/log/nginx:ro
       - seed_output:/var/log/seed_output:ro
     command: -config.file=/etc/promtail/config.yml
@@ -250,9 +265,18 @@ services:
       - loki
     networks:
       - back_net
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:9080/ready || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   grafana:
-    image: grafana/grafana:12.4.0-19913286788
+    image: ${REGISTRY:-ghcr.io/sarkel/devops-project-sk}/grafana:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.grafana
     container_name: dp-grafana
     restart: unless-stopped
     env_file:
@@ -269,15 +293,19 @@ services:
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./docker/monitoring/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-      - ./docker/monitoring/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
-      - ./docker/monitoring/grafana/dashboards/json:/etc/grafana/provisioning/dashboards/json
     depends_on:
       - prometheus
       - loki
     networks:
       - back_net
       - front_net
+    healthcheck:
+      # We must include '/monitoring' in the URL because of GF_SERVER_ROOT_URL
+      test: [ "CMD-SHELL", "curl -f http://localhost:3000/monitoring/api/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 
 volumes:

@@ -1,0 +1,7 @@
+FROM grafana/grafana:12.4.0-19913286788
+
+COPY docker/monitoring/grafana/datasources.yaml /etc/grafana/provisioning/datasources/datasources.yaml
+
+COPY docker/monitoring/grafana/dashboards.yaml /etc/grafana/provisioning/dashboards/dashboards.yaml
+
+COPY docker/monitoring/grafana/dashboards/json /etc/grafana/provisioning/dashboards/json

@@ -22,6 +22,11 @@ jobs:
           - seeder
           - migrations
           - mqtt
+          - scheduler
+          - grafana
+          - prometheus
+          - loki
+          - promtail
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

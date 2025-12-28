@@ -1,0 +1,3 @@
+FROM grafana/loki:2.5.0
+
+COPY docker/monitoring/loki-config.yaml /etc/loki/local-config.yaml
